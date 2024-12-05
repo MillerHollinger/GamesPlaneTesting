@@ -5,7 +5,7 @@ import cv2
 piece_cascade = cv2.CascadeClassifier("HaarTraining/classifier/cascade.xml")
 
 img = cv2.imread("HaarTesting/p1.jpg")
-img = cv2.resize(img, (0,0), fx=0.08, fy=0.08) 
+img = cv2.resize(img, (0,0), fx=0.008, fy=0.008) 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 pieces = piece_cascade.detectMultiScale(gray, 1.3, 5)
