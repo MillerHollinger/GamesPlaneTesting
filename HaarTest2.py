@@ -1,26 +1,23 @@
 # Base code from https://medium.com/@vipulgote4/guide-to-make-custom-haar-cascade-xml-file-for-object-detection-with-opencv-6932e22c3f0e
 
-"""
-Notes from 12/4/24
-- It looks like the Haar classifier is performing very poorly. On both positive and negative examples, it maintains a ~10% detection rate.
-- Additionally, the bounding box is far too large right now. This might be an issue with .detectMultiScale, but tuning parameters seems to affect
-    both + and - equally.
-- I'm not sure why Haar training is terminating if it's only identifying 10% of positive images. Maybe an issue with the tool.
-
-> Raising haar training size to 48x32 to see if it's a resolution issue.
-
-- I think the issue is the images' size. The problem is that the images are 4000x3000 because they were taken on a phone. I'm going to mass scale down the images
-    to a more workable size.
-
-"""
-
 import cv2
 import os
 from os import listdir
-from PIL import Image
+from PIL import Image, ImageOps
 PIECE_CASCADE = cv2.CascadeClassifier("HaarTraining/classifier/cascade.xml")
 POSITIVE_IMAGE_PATH = "HaarTraining/p"
 NEGATIVE_IMAGE_PATH = "HaarTraining/n"
+
+# Haars and shows bbox for an image.
+def bboxDisplay(imagePath):
+    img = cv2.imread(imagePath)
+    resized = cv2.resize(img,(400,300))
+    gray = cv2.cvtColor(resized,cv2.COLOR_BGR2GRAY)
+
+    pieces = PIECE_CASCADE.detectMultiScale(gray, 2, 4)
+
+    renderPieceBBoxes(img, pieces)
+    showShortcut(img)
 
 def checkImageForPiece(imagePath):
     img = cv2.imread(imagePath)
@@ -55,13 +52,48 @@ def runTestOn(folder, expected):
     
     print(f"## {expected} TEST DONE: {positive} + / {negative} - \t\t => {positive / (positive + negative)} % pos")
 
-runTestOn(POSITIVE_IMAGE_PATH, "+")
-
 # From https://stackoverflow.com/questions/21517879/python-pil-resize-all-images-in-a-folder
-def massResize(folder, targetRatio):
-    for item in folder:
-        if os.path.isfile(folder+item):
-            im = Image.open(folder+item)
-            f, e = os.path.splitext(folder+item)
-            imResize = im.resize((4000 * targetRatio,3000 * targetRatio), Image.ANTIALIAS)
-            imResize.save(f + ' resized.jpg', 'JPEG', quality=90)
+def massResize(folder):
+    for item in os.listdir(folder):
+        print(item)
+        path = folder + "/" + item
+
+        if os.path.isfile(path):
+            im = Image.open(path)
+            im = ImageOps.exif_transpose(im)
+            f, e = os.path.splitext(path)
+            imResize = im.resize((800, 600), Image.BILINEAR)
+            imResize.save(f + "_resize.jpg", 'JPEG', quality=90)
+            
+def clearResizes(folder):
+    for item in os.listdir(folder):
+        path = folder + "/" + item
+        if item.count("resize") > 0:
+            os.remove(path)
+
+def clearNonResizes(folder):
+    for item in os.listdir(folder):
+        path = folder + "/" + item
+        if item.count("resize") == 0:
+            os.remove(path)
+
+def clearWrongFiles(folder):
+    for item in os.listdir(folder):
+        path = folder + "/" + item
+        if item.count(".") == 0:
+            print(item)
+            os.remove(path)
+
+#runTestOn(NEGATIVE_IMAGE_PATH, "+")
+#massResize(POSITIVE_IMAGE_PATH)
+#clearResizes(POSITIVE_IMAGE_PATH)
+#clearNonResizes(POSITIVE_IMAGE_PATH)
+#clearWrongFiles(POSITIVE_IMAGE_PATH)
+            
+def showAllIn(folder):
+    for item in os.listdir(folder):
+        path = folder + "/" + item
+        bboxDisplay(path)
+
+showAllIn(POSITIVE_IMAGE_PATH)
+        
