@@ -1,6 +1,17 @@
 # New entry point to the system.
 # Finds arucos on the board and converts them to board coordinates.
 
+
+"""
+ISSUE RIGHT NOW
+- We need to:
+1. Get a piece and an anchor.
+2. Convert the piece's coordinates to being in the anchor's coordinate system.
+- Translate it by -anchor_tvec.
+- Rotate it by -anchor_rvec.
+
+"""
+
 from __future__ import annotations
 import cv2
 from cv2 import aruco
@@ -91,8 +102,17 @@ for info in aruco_info:
 # 7. Show results.
 print("[Step 7] Showing final results.")
 print(f"{len(aruco_info)} ArUco markers were found.")
+test_image = image.copy()
 for info in aruco_info:
     print(info)
     cv2.drawFrameAxes(image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
-cv2.imshow("Image", image)
-cv2.waitKey(0)
+
+tests = 10
+while tests > 0:
+    tests -= 1
+    my_image = test_image.copy()
+    for info in aruco_info:
+        cv2.drawFrameAxes(my_image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
+    cv2.imshow("Image", my_image)
+    key = cv2.waitKey(0)
+    print(key)

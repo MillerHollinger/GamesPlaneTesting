@@ -65,6 +65,7 @@ class ArucoInfo:
     def to_world_coordinates(self, cam_matrix, dist_coeff):
         self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.raw_corners, self.marker_size(), cam_matrix, dist_coeff)
         self.tvec = self.tvec[0][0]
+        print(f"Raw world coordinates of {self.id} are {self.tvec}")
         return (self.rvec, self.tvec)
     
     # Allows you to manually set where a marker is, for use on board positions only.
@@ -124,14 +125,24 @@ class ArucoInfo:
         return self.closest_board_position
     
     # Changes the basis of the second rvec, tvec to be in the first.
-    def change_basis(rvec_basis, tvec_basis, rvec1, tvec1):
-        tvec_out = tvec1 - tvec_basis
+    def change_basis(rvec1, tvec1, rvec2, tvec2):
+        # Convert to rotation matrices
+        R1, _ = cv2.Rodrigues(rvec1)
+        R2, _ = cv2.Rodrigues(rvec2)
+        
+        # Inverse of basis rotation (=transpose)
+        R1_inv = np.transpose(R1)
+        
+        # Transform the rotation vector 
+        R2_transformed = np.dot(R1_inv, R2) 
+        
+        # Transform and then rotate
+        tvec2_transformed = np.dot(R1_inv, (tvec2 - tvec1)) 
+        
+        # Back to rodrigues form
+        rvec2_transformed, _ = cv2.Rodrigues(R2_transformed) 
 
-        R_basis, _ = cv2.Rodrigues(rvec_basis[0][0])
-        tvec_out = np.dot(R_basis.T, tvec_out)
-
-        # TODO we aren't using rvec1 right now but it ought to be correct.
-        return rvec1, tvec_out
+        return rvec2_transformed, tvec2_transformed
     
     def __str__(self):
         if self.fully_defined():
