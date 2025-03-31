@@ -1,6 +1,7 @@
 # New entry point to the system.
 # Finds arucos on the board and converts them to board coordinates.
 
+from __future__ import annotations
 import cv2
 from cv2 import aruco
 import argparse
@@ -8,8 +9,6 @@ import imutils
 import yaml
 import numpy as np
 from typing import List
-from __future__ import annotations
-
 from ArucoInfo import ArucoInfo
 
 # 0. Load the calibration file.
@@ -31,7 +30,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
 	help="Path to image with ARUCO tag(s).")
 args = vars(ap.parse_args())
-print(f"[Step 1] Chosen picture is {args["image"]}.")
+print("[Step 1] Chosen picture is " + args["image"])
 
 # Rescale the image to a given value. Larger values run slower but higher accuracy likely.
 IMAGE_SCALE = 600
@@ -68,21 +67,12 @@ def type_for_id(id):
 
 aruco_info = []
 for (marker_corner, marker_id) in zip(corners, ids):
-    arucoCorners = marker_corner.reshape((4, 2))
-    (topLeft, topRight, bottomRight, bottomLeft) = arucoCorners
-    
-    # Convert coordinate pairs to ints.
-    topRight = (int(topRight[0]), int(topRight[1]))
-    bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-    bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-    topLeft = (int(topLeft[0]), int(topLeft[1]))
-
-    aruco_info.append(ArucoInfo((topRight, bottomRight, bottomLeft, topLeft), type_for_id(marker_id), marker_id))
+    aruco_info.append(ArucoInfo(marker_corner, type_for_id(marker_id[0]), marker_id[0]))
 
 # 4. Run to_world_coordinates on everything.
 print("[Step 4] Calculating world coordinates for ArucoInfo objects.")
 for info in aruco_info:
-    info.to_world_coordinates()
+    info.to_world_coordinates(CAM_MATRIX, DIST_COEFF)
 
 # 5. For anchors, manually enter their board positions.
 print("[Step 5] Setting anchor board positions.")
@@ -95,13 +85,14 @@ anchors = [info for info in aruco_info if info.type == "anchor"]
 # 6. Extrapolate piece positions.
 print("[Step 6] Extrapolating piece positions.")
 for info in aruco_info:
-    if info.type == "piece":
-        info.to_board_position(anchors)
-
+    if info.type != "anchor":
+        print(info.to_board_position(anchors))
 
 # 7. Show results.
 print("[Step 7] Showing final results.")
 print(f"{len(aruco_info)} ArUco markers were found.")
 for info in aruco_info:
     print(info)
-    
+    cv2.drawFrameAxes(image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
+cv2.imshow("Image", image)
+cv2.waitKey(0)

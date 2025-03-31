@@ -1,6 +1,7 @@
 # The ArucoInfo class stores data about an Aruco marker.
 # Miller Hollinger 2025
 
+from __future__ import annotations
 import cv2
 from cv2 import aruco
 import argparse
@@ -8,7 +9,6 @@ import imutils
 import yaml
 import numpy as np
 from typing import List
-from __future__ import annotations
 
 class ArucoInfo:
     # corners: the aruco's four corners, stored in this order:
@@ -18,36 +18,33 @@ class ArucoInfo:
     # marker_type: "anchor", "white", "black"
         # Represents what the marker's position represents.
     VALID_MARKER_TYPES = ["anchor", "white", "black"]
-    def __init__(self, corners, marker_type, id):
-        if len(corners) != 4:
-            raise Exception(f"ArucoInfo object with an invalid number of corners: {len(corners)} (should be 4)")
-        if len(corners[0]) != 2:
-            raise Exception(f"ArucoInfo object with an invalid number of coordinates in a corner: {len(corners[0])} (should be 2)")
+    def __init__(self, raw_corners, marker_type, id):
+        if raw_corners.shape != (1, 4, 2):
+            raise Exception(f"ArucoInfo object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
         if not (marker_type in self.VALID_MARKER_TYPES):
             raise Exception(f"ArucoInfo object with an invalid marker_type: {marker_type} (should be {self.VALID_MARKER_TYPES})")
         
-        self.corners = corners
+        self.raw_corners = raw_corners
+        self.type = marker_type
         self.id = id
 
-        # Shorthand access to corners and center.
-        self.top_r = corners[0]
-        self.bot_r = corners[1]
-        self.bot_l = corners[2]
-        self.top_l = corners[3]
-        self.center = (sum(x for x, y in corners) / len(corners), sum(y for x, y in corners) / len(corners))
-
-        # Corners reshaped so they're structured like the actual object.
-        self.corners_reshaped = ((self.top_l, self.top_r), (self.bot_l, self.bot_r))
-
-        # Save my type.
-        self.type = marker_type
+        # Reshape corners for easier use in UI.
+        self.reshaped_corners = raw_corners.reshape((4, 2))
+        (topLeft, topRight, bottomRight, bottomLeft) = self.reshaped_corners
+        
+        # Convert coordinate pairs to ints.
+        self.top_r = (int(topRight[0]), int(topRight[1]))
+        self.bot_r = (int(bottomRight[0]), int(bottomRight[1]))
+        self.bot_l = (int(bottomLeft[0]), int(bottomLeft[1]))
+        self.top_l = (int(topLeft[0]), int(topLeft[1]))
+        self.center = (sum(x for x, y in self.reshaped_corners) / len(self.reshaped_corners), sum(y for x, y in self.reshaped_corners) / len(self.reshaped_corners))
 
         # World coordinates are not yet calculated.
         # rvec is Rodrigues' rotation vector form of the aruco's rotation.
         # tvec is the offset from the camera.
         self.rvec, self.tvec = "not calculated", "not calculated"
 
-        # Board position is not yet calculated
+        # Board position is not yet calculated.
         self.exact_board_position = "not calculated"
         self.closest_board_position = "not calculated"
 
@@ -66,18 +63,23 @@ class ArucoInfo:
     # Converts my aruco coordinates to world coordinates using the camera calibration file.
     # Stores the world coordinates on the object.
     def to_world_coordinates(self, cam_matrix, dist_coeff):
-        self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.corners, self.marker_size(), cam_matrix, dist_coeff)
+        self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.raw_corners, self.marker_size(), cam_matrix, dist_coeff)
+        self.tvec = self.tvec[0][0]
         return (self.rvec, self.tvec)
     
     # Allows you to manually set where a marker is, for use on board positions only.
     def set_board_position(self, board_position):
-        if self.marker_type != "anchor":
+        if self.type != "anchor":
             raise Exception("Attempted to set a piece's board position, which is not allowed. Use to_board_position to calculate the piece's position relative to anchor markers.")
         self.exact_board_position = board_position
+        self.closest_board_position = board_position
 
     # Return if rvec, tvec, and board_position set
     def fully_defined(self):
-        return self.rvec == "not calculated" or self.tvec == "not calculated" or self.exact_board_position == "not calculated" or self.closest_board_position == "not calculated"
+        return (not isinstance(self.rvec, list)) \
+            or (not isinstance(self.tvec, list)) \
+            or (self.exact_board_position == "not calculated") \
+            or (self.closest_board_position == "not calculated")
 
     # Converts my world coordinates to a board position given some information about the board and the locations of the markers.
     # anchor_markers is two or more anchor arucos used as reference points.
@@ -100,13 +102,21 @@ class ArucoInfo:
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
             _, rebased_tvec = ArucoInfo.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
+            print(f"Locating Piece {self.id}: Anchor {marker_data.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
-            this_pos_estimate = (rebased_tvec[0] / self.SPACE_WIDTH, rebased_tvec[1] / self.SPACE_WIDTH)
+            this_pos_estimate = [rebased_tvec[0] / self.SPACE_WIDTH, rebased_tvec[2] / self.SPACE_WIDTH]
+
+            # Offset by the anchor's place.
+            this_pos_estimate[0] += marker_data.closest_board_position[0]
+            this_pos_estimate[1] += marker_data.closest_board_position[1]
+
             pos_estimates.append(this_pos_estimate)
 
+            print(f"Locating Piece {self.id}: Anchor {marker_data.id} estimates at {this_pos_estimate}")
+
         # Save the exact (decimal) board pos in case we need it.
-        self.exact_board_position = (sum(x for x, y in pos_estimates) / len(pos_estimates), sum(y for x, y in pos_estimates) / len(pos_estimates))
+        self.exact_board_position = (sum(x for x, z in pos_estimates) / len(pos_estimates), sum(z for x, z in pos_estimates) / len(pos_estimates))
 
         # Average and round to an integer space.
         self.closest_board_position = (round(self.exact_board_position[0]), round(self.exact_board_position[1]))
@@ -114,30 +124,16 @@ class ArucoInfo:
         return self.closest_board_position
     
     # Changes the basis of the second rvec, tvec to be in the first.
-    def change_basis(rvec1, tvec1, rvec2, tvec2):
-        # Convert rvecs to a rotation matrix
-        R1, _ = cv2.Rodrigues(rvec1)
-        R2, _ = cv2.Rodrigues(rvec2)
-        
-        # Step 1: Translate tvec2 into the new coordinate system by subtracting tvec1
-        tvec2_new = tvec2 - tvec1
-        
-        # Step 2: Rotate the new translation vector using the inverse of R1
-        # Multiply the translation by the inverse of R1 (the inverse of a rotation matrix is its transpose)
-        R1_inv = R1.T 
-        
-        # Apply the rotation
-        tvec2_new_rotated = R1_inv.dot(tvec2_new)
-        
-        # Step 3: Rotate rvec2 to the new coordinate system
-        rvec2_new = R1_inv.dot(R2) 
-        
-        # Convert the new rvec2 back to a Rodrigues rotation vector
-        rvec2_new, _ = cv2.Rodrigues(rvec2_new)
-        
-        return rvec2_new, tvec2_new_rotated
+    def change_basis(rvec_basis, tvec_basis, rvec1, tvec1):
+        tvec_out = tvec1 - tvec_basis
+
+        R_basis, _ = cv2.Rodrigues(rvec_basis[0][0])
+        tvec_out = np.dot(R_basis.T, tvec_out)
+
+        # TODO we aren't using rvec1 right now but it ought to be correct.
+        return rvec1, tvec_out
     
     def __str__(self):
         if self.fully_defined():
-            return f"DEFINED ArucoInfo ID {self.id} ({self.type}); corners @ {self.corners}; rvec {self.rvec}, tvec {self.tvec}; board position {self.exact_board_position} ({self.closest_board_position})"
-        return f"PARTIAL ArucoInfo ID {self.id} ({self.type}); corners @ {self.corners}; rvec {self.rvec}, tvec {self.tvec}; board position {self.exact_board_position} ({self.closest_board_position})"
+            return f"DEFINED ArucoInfo ID {self.id} ({self.type}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
+        return f"PARTIAL ArucoInfo ID {self.id} ({self.type}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
