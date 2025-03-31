@@ -1,32 +1,20 @@
 # New entry point to the system.
-# Finds arucos on the board and converts them to board coordinates.
+# Finds arucos on the board and
+# converts them to board coords.
 
-
-"""
-ISSUE RIGHT NOW
-- We need to:
-1. Get a piece and an anchor.
-2. Convert the piece's coordinates to being in the anchor's coordinate system.
-- Translate it by -anchor_tvec.
-- Rotate it by -anchor_rvec.
-
-"""
-
-from __future__ import annotations
 import cv2
-from cv2 import aruco
-import argparse
-import imutils
 import yaml
+import imutils
+import argparse
 import numpy as np
-from typing import List
+from cv2 import aruco
 from ArucoInfo import ArucoInfo
 
 # 0. Load the calibration file.
 print("[Step 0] Loading the calibration file.")
 CAM_MATRIX = -1
 DIST_COEFF = -1
-with open("calibration.yaml") as stream:
+with open("calibration_josh.yaml") as stream:
     try:
         yaml_data = yaml.safe_load(stream)
         CAM_MATRIX = np.array(yaml_data['camera_matrix'])
@@ -41,26 +29,40 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True,
 	help="Path to image with ARUCO tag(s).")
 args = vars(ap.parse_args())
-print("[Step 1] Chosen picture is " + args["image"])
 
-# Rescale the image to a given value. Larger values run slower but higher accuracy likely.
+# Rescale the image to a given value. Larger
+# values run slower but give higher accuracy.
 IMAGE_SCALE = 600
-
 image = cv2.imread(args["image"])
 image = imutils.resize(image, width=IMAGE_SCALE)
+# Debug
+# cv2.imshow(args["image"], image)
+# cv2.waitKey(0)
 
 # 2. Pull out the arucos.
 print("[Step 2] Finding arucos in picture.")
 dictionary = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
 parameters = aruco.DetectorParameters()
-(corners, ids, rejected) = aruco.detectMarkers(image, dictionary, parameters=parameters)
+(corners, ids, rejected) = aruco.detectMarkers(
+    image, dictionary, parameters=parameters)
+# Debug
+if ids is not None:
+    icopy = image.copy()
+    aruco.drawDetectedMarkers(icopy, corners, ids)
+    debug = f"{len(corners)} markers (IDs = {ids.flatten()}), {len(rejected)} rejected"
+    print(debug)
+    cv2.imshow(debug, icopy)
+    cv2.waitKey(0)
+else:
+    print("Failed to find arucos in picture.")
+    exit()
 
-# 3. Make an arucoinfo object for each and store everything.
+# 3. Build ArucoInfo objects.
 print("[Step 3] Building ArucoInfo objects.")
 BLACK_PIECE_IDS = [1, 2, 3, 4, 5]
 WHITE_PIECE_IDS = [6, 7, 8, 9, 10]
 ANCHOR_MARKER_IDS = [11, 12, 13, 14, 15]
-ANCHOR_MARKER_BOARD_POSITIONS = {
+BOARD_POSITIONS = {
     11: (-1, 5), 
     12: (5, 5), 
     13: (-1, -1), 
@@ -77,13 +79,28 @@ def type_for_id(id):
     return "INVALID"
 
 aruco_info = []
-for (marker_corner, marker_id) in zip(corners, ids):
-    aruco_info.append(ArucoInfo(marker_corner, type_for_id(marker_id[0]), marker_id[0]))
+for (corner, id) in zip(corners, ids):
+    aruco_info.append(ArucoInfo(id[0], corner,
+        type_for_id(id[0]), CAM_MATRIX, DIST_COEFF))
 
-# 4. Run to_world_coordinates on everything.
-print("[Step 4] Calculating world coordinates for ArucoInfo objects.")
+# 4. Calculate to_world_coordinates.
+print("[Step 4] Calculating world coordinates.")
+icopy = image.copy()
 for info in aruco_info:
-    info.to_world_coordinates(CAM_MATRIX, DIST_COEFF)
+    icopy = info.to_world_coordinates(debug=icopy)
+cv2.imshow(f"WORLD coords for {args["image"]}", icopy)
+cv2.waitKey(0)
+
+# 5. Calculate plot_board_coordinates.
+print("[Step 5] Calculating board coordinates.")
+info1, info2 = aruco_info
+icopy = info1.plot_board_coordinates(info2, BOARD_POSITIONS, debug=icopy)
+cv2.imshow(f"BOARD coordinates for {args["image"]}", icopy)
+cv2.waitKey(0)
+print("exit statement")
+exit()
+
+### old code ###
 
 # 5. For anchors, manually enter their board positions.
 print("[Step 5] Setting anchor board positions.")
