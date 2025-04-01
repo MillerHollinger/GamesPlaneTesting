@@ -1,3 +1,4 @@
+# Older file, preparing to get rid of this.
 # New entry point to the system.
 # Finds arucos on the board and converts them to board coordinates.
 
@@ -109,49 +110,10 @@ for info in aruco_info:
 # 7. Show results.
 print("[Step 7] Showing final results.")
 print(f"{len(aruco_info)} ArUco markers were found.")
-test_image = image.copy()
+print(f"Execution took {(time.time() - start_time):.6f} seconds")
 for info in aruco_info:
     print(info)
     cv2.drawFrameAxes(image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
-
-
-#############################################
-# DEBUG ZONE ################################
-#############################################
-    
-def debug_tvec_add(info, diff):
-    for i in range(len(info.tvec)):
-        info.tvec[i] += diff[i]
-
-tests = 10
-DEBUG_MAPS = {
-    119:    [0, -1, 0], # w -> sub Y
-    115:    [0, 1, 0], # s -> add Y
-    101:    [0, 0, 1], # e -> add Z
-    113:    [0, 0, -1], # q -> sub Z
-    100:    [1, 0, 0],  # d -> add X
-    97:     [-1, 0, 0] # a -> sub X
-}
-
-chosen_piece = [x for x in aruco_info if x.type != "anchor"][0]
-chosen_anchor = [x for x in aruco_info if x.type == "anchor"][0]
-print(f"Chose {chosen_piece.id} <- {chosen_anchor.id}")
-print(f"{(chosen_piece.tvec - chosen_anchor.tvec)} -> Distance of {np.linalg.norm(chosen_piece.tvec - chosen_anchor.tvec)}")
-
-print(f"Execution took {(time.time() - start_time):.6f} seconds")
-
-while True:
-    tests -= 1
-    my_image = test_image.copy()
-    for info in aruco_info:
-        cv2.drawFrameAxes(my_image, CAM_MATRIX, DIST_COEFF, (0, 0, 0), info.tvec, 2, 3)
-        cv2.putText(my_image, str([round(e, 1) for e in info.tvec]), info.top_r, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        cv2.arrowedLine(my_image, chosen_anchor.center, chosen_piece.center, (255, 255, 255))
-    cv2.imshow("Image", my_image)
-    key = cv2.waitKey(0)
-
-    for info in aruco_info:
-        debug_tvec_add(info, DEBUG_MAPS[key])
-
-    if key == 27:
-        exit()
+    cv2.putText(image, str([round(e, 1) for e in info.tvec]), info.top_r, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+cv2.imshow("Image", image)
+cv2.waitKey(0)

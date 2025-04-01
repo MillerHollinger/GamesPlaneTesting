@@ -1,4 +1,5 @@
-# The ArucoInfo class stores data about an Aruco marker.
+# Stores information about an aruco marker seen through the camera.
+# These objects are regenerated for each picture taken of the aruco.
 # Miller Hollinger 2025
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ import yaml
 import numpy as np
 from typing import List
 
-class ArucoInfo:
+class DigitalAruco:
     # corners: the aruco's four corners, stored in this order:
         # 4 1
         # | |
@@ -18,15 +19,13 @@ class ArucoInfo:
     # marker_type: "anchor", "white", "black"
         # Represents what the marker's position represents.
     VALID_MARKER_TYPES = ["anchor", "white", "black"]
-    def __init__(self, raw_corners, marker_type, id):
+    def __init__(self, raw_corners, id, marker_size, anchor):
         if raw_corners.shape != (1, 4, 2):
             raise Exception(f"ArucoInfo object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
-        if not (marker_type in self.VALID_MARKER_TYPES):
-            raise Exception(f"ArucoInfo object with an invalid marker_type: {marker_type} (should be {self.VALID_MARKER_TYPES})")
-        
+
         self.raw_corners = raw_corners
-        self.type = marker_type
         self.id = id
+        self.anchor = anchor
 
         # Reshape corners for easier use in UI.
         self.reshaped_corners = raw_corners.reshape((4, 2))
@@ -48,17 +47,7 @@ class ArucoInfo:
         self.exact_board_position = "not calculated"
         self.closest_board_position = "not calculated"
 
-    # In cm, how wide a (square) space on the board is.
-    SPACE_WIDTH = 5.05
-
-    # In cm, maps how large a marker should be to a side.
-    TYPE_TO_SIZE = {
-        "anchor": 5.05,
-        "black": 1.66,
-        "white": 1.66
-    }
-    def marker_size(self):
-        return self.TYPE_TO_SIZE[self.type]
+        self.marker_size = marker_size
 
     # Converts my aruco coordinates to world coordinates using the camera calibration file.
     # Stores the world coordinates on the object.
@@ -84,7 +73,7 @@ class ArucoInfo:
 
     # Converts my world coordinates to a board position given some information about the board and the locations of the markers.
     # anchor_markers is two or more anchor arucos used as reference points.
-    def to_board_position(self, anchor_markers: List[ArucoInfo]):
+    def to_board_position(self, anchor_markers: List[DigitalAruco], cm_to_space: float):
         if len(anchor_markers) < 2:
             raise Exception("You must provide at least 2 ArucoInfo objects for anchors to calculate a board position.")
 
@@ -102,11 +91,11 @@ class ArucoInfo:
 
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
-            _, rebased_tvec = ArucoInfo.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
+            _, rebased_tvec = DigitalAruco.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
             print(f"Locating Piece {self.id}: Anchor {marker_data.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
-            this_pos_estimate = [rebased_tvec[0] / self.SPACE_WIDTH, rebased_tvec[1] / self.SPACE_WIDTH]
+            this_pos_estimate = [rebased_tvec[0] / cm_to_space, rebased_tvec[1] / cm_to_space]
 
             # Offset by the anchor's place.
             this_pos_estimate[0] += marker_data.closest_board_position[0]
