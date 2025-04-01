@@ -10,6 +10,7 @@ import imutils
 import yaml
 import numpy as np
 from typing import List
+from PhysicalAruco import * 
 
 class DigitalAruco:
     # corners: the aruco's four corners, stored in this order:
@@ -19,13 +20,11 @@ class DigitalAruco:
     # marker_type: "anchor", "white", "black"
         # Represents what the marker's position represents.
     VALID_MARKER_TYPES = ["anchor", "white", "black"]
-    def __init__(self, raw_corners, id, marker_size, anchor):
+    def __init__(self, raw_corners, phys: PhysicalAruco):
         if raw_corners.shape != (1, 4, 2):
             raise Exception(f"ArucoInfo object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
 
         self.raw_corners = raw_corners
-        self.id = id
-        self.anchor = anchor
 
         # Reshape corners for easier use in UI.
         self.reshaped_corners = raw_corners.reshape((4, 2))
