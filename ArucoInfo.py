@@ -37,7 +37,7 @@ class ArucoInfo:
         self.bot_r = (int(bottomRight[0]), int(bottomRight[1]))
         self.bot_l = (int(bottomLeft[0]), int(bottomLeft[1]))
         self.top_l = (int(topLeft[0]), int(topLeft[1]))
-        self.center = (sum(x for x, y in self.reshaped_corners) / len(self.reshaped_corners), sum(y for x, y in self.reshaped_corners) / len(self.reshaped_corners))
+        self.center = (int(sum(x for x, y in self.reshaped_corners) / len(self.reshaped_corners)), int(sum(y for x, y in self.reshaped_corners) / len(self.reshaped_corners)))
 
         # World coordinates are not yet calculated.
         # rvec is Rodrigues' rotation vector form of the aruco's rotation.
@@ -106,7 +106,7 @@ class ArucoInfo:
             print(f"Locating Piece {self.id}: Anchor {marker_data.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
-            this_pos_estimate = [rebased_tvec[0] / self.SPACE_WIDTH, rebased_tvec[2] / self.SPACE_WIDTH]
+            this_pos_estimate = [rebased_tvec[0] / self.SPACE_WIDTH, rebased_tvec[1] / self.SPACE_WIDTH]
 
             # Offset by the anchor's place.
             this_pos_estimate[0] += marker_data.closest_board_position[0]

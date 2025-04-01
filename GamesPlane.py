@@ -21,12 +21,17 @@ import yaml
 import numpy as np
 from typing import List
 from ArucoInfo import ArucoInfo
+import time
 
 # 0. Load the calibration file.
 print("[Step 0] Loading the calibration file.")
 CAM_MATRIX = -1
 DIST_COEFF = -1
-with open("calibration.yaml") as stream:
+
+# DEBUG NOTE: The generated calibration.yaml file is AWFUL and RUINS everything.
+# This dummy file I put together, calib-dummy.yaml, works 1000% better, and actually returns the correct location for the marker.
+# That said, note that it's not the real calibration file for any camera in particular, and should be replaced with a real calibration file.
+with open("calib-dummy.yaml") as stream:
     try:
         yaml_data = yaml.safe_load(stream)
         CAM_MATRIX = np.array(yaml_data['camera_matrix'])
@@ -44,7 +49,9 @@ args = vars(ap.parse_args())
 print("[Step 1] Chosen picture is " + args["image"])
 
 # Rescale the image to a given value. Larger values run slower but higher accuracy likely.
-IMAGE_SCALE = 600
+IMAGE_SCALE = 800
+
+start_time = time.time()
 
 image = cv2.imread(args["image"])
 image = imutils.resize(image, width=IMAGE_SCALE)
@@ -107,12 +114,44 @@ for info in aruco_info:
     print(info)
     cv2.drawFrameAxes(image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
 
+
+#############################################
+# DEBUG ZONE ################################
+#############################################
+    
+def debug_tvec_add(info, diff):
+    for i in range(len(info.tvec)):
+        info.tvec[i] += diff[i]
+
 tests = 10
-while tests > 0:
+DEBUG_MAPS = {
+    119:    [0, -1, 0], # w -> sub Y
+    115:    [0, 1, 0], # s -> add Y
+    101:    [0, 0, 1], # e -> add Z
+    113:    [0, 0, -1], # q -> sub Z
+    100:    [1, 0, 0],  # d -> add X
+    97:     [-1, 0, 0] # a -> sub X
+}
+
+chosen_piece = [x for x in aruco_info if x.type != "anchor"][0]
+chosen_anchor = [x for x in aruco_info if x.type == "anchor"][0]
+print(f"Chose {chosen_piece.id} <- {chosen_anchor.id}")
+print(f"{(chosen_piece.tvec - chosen_anchor.tvec)} -> Distance of {np.linalg.norm(chosen_piece.tvec - chosen_anchor.tvec)}")
+
+print(f"Execution took {(time.time() - start_time):.6f} seconds")
+
+while True:
     tests -= 1
     my_image = test_image.copy()
     for info in aruco_info:
-        cv2.drawFrameAxes(my_image, CAM_MATRIX, DIST_COEFF, info.rvec, info.tvec, 2, 3)
+        cv2.drawFrameAxes(my_image, CAM_MATRIX, DIST_COEFF, (0, 0, 0), info.tvec, 2, 3)
+        cv2.putText(my_image, str([round(e, 1) for e in info.tvec]), info.top_r, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+        cv2.arrowedLine(my_image, chosen_anchor.center, chosen_piece.center, (255, 255, 255))
     cv2.imshow("Image", my_image)
     key = cv2.waitKey(0)
-    print(key)
+
+    for info in aruco_info:
+        debug_tvec_add(info, DEBUG_MAPS[key])
+
+    if key == 27:
+        exit()
