@@ -4,36 +4,48 @@ from GamesFrame import *
 from PhysicalBoardInfo import *
 from PhysicalAruco import *
 
-# Define the arucos for this GamesPlane.
-black_piece_arucos = PhysicalAruco.generate_many(
-    [1, 2, 3, 4, 5], 
-    "black", 
-    1.66,
-    False,
-    [None for i in range(5)]
-)
-white_piece_arucos = PhysicalAruco.generate_many(
-    [6, 7, 8, 9, 10], 
-    "black", 
-    1.66,
-    False,
-    [None for i in range(5)]
-)
-anchor_arucos = PhysicalAruco.generate_many(
-    [11, 12, 13, 14, 15], 
-    "anchor", 
-    5.05,
-    True,
-    [(-1, 5), (5, 5), (-1, -1), (5, -1), (2, -2)]
-)
+class DummyGame:
+    def __init__(self):
+        self.name = "Dummy Game"
 
-# Set up where pieces may be.
-valid_board_pos = [[(x, y) for y in range(5)] for x in range(5)]
+        # Define the arucos for this GamesPlane.
+        black_piece_arucos = PhysicalAruco.generate_many(
+            [1, 2, 3, 4, 5], 
+            "black", 
+            1.66,
+            False,
+            [None for i in range(5)]
+        )
+        white_piece_arucos = PhysicalAruco.generate_many(
+            [6, 7, 8, 9, 10], 
+            "black", 
+            1.66,
+            False,
+            [None for i in range(5)]
+        )
+        anchor_arucos = PhysicalAruco.generate_many(
+            [11, 12, 13, 14, 15], 
+            "anchor", 
+            5.05,
+            True,
+            [(-1, 5), (5, 5), (-1, -1), (5, -1), (2, -2)]
+        )
 
-# Create the physical board.
-board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
+        # Set up where pieces may be.
+        valid_board_pos = [(x, y) for y in range(5) for x in range(5)]
 
-# Set up the GamesFrame for the board.
-gframe = GamesFrame("./calib-dummy.yaml", board_info)
+        # Create the physical board.
+        board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
 
-# Set 
+        # Set up the GamesFrame for the board.
+        self.gframe = GamesFrame("./calib-dummy.yaml", board_info)
+
+        # We're good to go. Now we can feed in images to the gframe using .process_image.
+
+    # Shortcut to pass an image to the gframe.
+    def process_image(self, image):
+        return self.gframe.process_image(image)
+    
+    # TODO Make this tostring better.
+    def __str__(self):
+        return self.name

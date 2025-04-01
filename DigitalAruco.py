@@ -11,16 +11,10 @@ import yaml
 import numpy as np
 from typing import List
 from PhysicalAruco import * 
+from PhysicalBoardInfo import *
 
 class DigitalAruco:
-    # corners: the aruco's four corners, stored in this order:
-        # 4 1
-        # | |
-        # 3-2
-    # marker_type: "anchor", "white", "black"
-        # Represents what the marker's position represents.
-    VALID_MARKER_TYPES = ["anchor", "white", "black"]
-    def __init__(self, raw_corners, phys: PhysicalAruco):
+    def __init__(self, raw_corners, phys: PhysicalAruco, cam_matrix, dist_coeff):
         if raw_corners.shape != (1, 4, 2):
             raise Exception(f"ArucoInfo object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
 
@@ -40,26 +34,33 @@ class DigitalAruco:
         # World coordinates are not yet calculated.
         # rvec is Rodrigues' rotation vector form of the aruco's rotation.
         # tvec is the offset from the camera.
-        self.rvec, self.tvec = "not calculated", "not calculated"
+        self.rvec, self.tvec = None, None
 
-        # Board position is not yet calculated.
-        self.exact_board_position = "not calculated"
-        self.closest_board_position = "not calculated"
+        self.phys = phys
 
-        self.marker_size = marker_size
+        # Anchored have precalculated board pos.
+        if self.phys.anchored:   
+            self.exact_board_position = self.phys.board_position
+            self.closest_board_position = self.phys.board_position
+        else:
+            self.exact_board_position = None
+            self.closest_board_position = None
 
-    # Converts my aruco coordinates to world coordinates using the camera calibration file.
+        self.to_world_coordinates(cam_matrix, dist_coeff)
+
+
+    # Converts my screen coordinates to world coordinates using camera calibration data.
     # Stores the world coordinates on the object.
     def to_world_coordinates(self, cam_matrix, dist_coeff):
-        self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.raw_corners, self.marker_size(), cam_matrix, dist_coeff)
+        self.rvec, self.tvec, _ = aruco.estimatePoseSingleMarkers(self.raw_corners, self.phys.size, cam_matrix, dist_coeff)
         self.tvec = self.tvec[0][0]
-        print(f"Raw world coordinates of {self.id} are {self.tvec}")
-        return (self.rvec, self.tvec)
+        self.rvec = self.rvec[0][0]
+        # print(f"Raw world coordinates of {self.id} are {self.tvec}")
     
     # Allows you to manually set where a marker is, for use on board positions only.
     def set_board_position(self, board_position):
-        if self.type != "anchor":
-            raise Exception("Attempted to set a piece's board position, which is not allowed. Use to_board_position to calculate the piece's position relative to anchor markers.")
+        if not self.phys.anchored:
+            raise Exception("Attempted to set an unanchored aruco's board position, which is not allowed. Use to_board_position to calculate the aruco's position relative to anchored markers.")
         self.exact_board_position = board_position
         self.closest_board_position = board_position
 
@@ -71,16 +72,19 @@ class DigitalAruco:
             or (self.closest_board_position == "not calculated")
 
     # Converts my world coordinates to a board position given some information about the board and the locations of the markers.
-    # anchor_markers is two or more anchor arucos used as reference points.
-    def to_board_position(self, anchor_markers: List[DigitalAruco], cm_to_space: float):
-        if len(anchor_markers) < 2:
-            raise Exception("You must provide at least 2 ArucoInfo objects for anchors to calculate a board position.")
+    # anchor_markers is one or more anchor arucos used as reference points.
+    def to_board_position(self, anchor_markers: List[DigitalAruco], board: PhysicalBoardInfo):
+        if self.phys.anchored:
+            raise Exception("Tried to calculate the board position of an anchor, but anchors are precalculated.")
+        
+        if len(anchor_markers) < 1:
+            raise Exception("You must provide at least 1 DigitalAruco object to calculate a board position.")
 
         # Verify that:
         # - Each anchor_marker is an "anchor"
         # - Each anchor_marker has its rvec, tvec, and board_position set
         for marker_data in anchor_markers:
-            if marker_data.type != "anchor":
+            if not marker_data.phys.anchored:
                 raise Exception("A marker in anchor_markers is not an anchor.")
             if not marker_data.fully_defined():
                 raise Exception("A marker in anchor_markers is not fully defined (call to_world_coordinates and set_board_position on each anchor)")
@@ -91,10 +95,10 @@ class DigitalAruco:
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
             _, rebased_tvec = DigitalAruco.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
-            print(f"Locating Piece {self.id}: Anchor {marker_data.id} says an offset of {rebased_tvec}")
+            # print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
-            this_pos_estimate = [rebased_tvec[0] / cm_to_space, rebased_tvec[1] / cm_to_space]
+            this_pos_estimate = [rebased_tvec[0] / board.cm_to_space, rebased_tvec[1] / board.cm_to_space]
 
             # Offset by the anchor's place.
             this_pos_estimate[0] += marker_data.closest_board_position[0]
@@ -102,13 +106,13 @@ class DigitalAruco:
 
             pos_estimates.append(this_pos_estimate)
 
-            print(f"Locating Piece {self.id}: Anchor {marker_data.id} estimates at {this_pos_estimate}")
+            print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} estimates at {round(this_pos_estimate[0], 2), round(this_pos_estimate[1], 2)}")
 
         # Save the exact (decimal) board pos in case we need it.
         self.exact_board_position = (sum(x for x, z in pos_estimates) / len(pos_estimates), sum(z for x, z in pos_estimates) / len(pos_estimates))
 
-        # Average and round to an integer space.
-        self.closest_board_position = (round(self.exact_board_position[0]), round(self.exact_board_position[1]))
+        # Ask the board for the closest space.
+        self.closest_board_position = board.closest_valid_space(self.exact_board_position)
 
         return self.closest_board_position
     
@@ -133,6 +137,8 @@ class DigitalAruco:
         return rvec2_transformed, tvec2_transformed
     
     def __str__(self):
-        if self.fully_defined():
-            return f"DEFINED ArucoInfo ID {self.id} ({self.type}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
-        return f"PARTIAL ArucoInfo ID {self.id} ({self.type}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
+        return f"{"Anchored" if self.phys.anchored else "Unanchored"} ArUco ID {self.phys.id}, board position {self.closest_board_position}"
+
+    def string_info(self):
+        defined = "DEFINED" if self.fully_defined() else "PARTIAL"
+        return f"{defined} ArucoInfo ID {self.phys.id} ({self.phys.tag}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"

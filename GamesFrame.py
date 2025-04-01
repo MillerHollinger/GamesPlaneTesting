@@ -27,8 +27,7 @@ class GamesFrame:
         # Record the board info.
         self.board_info = board_info
 
-
-    # Given an image, returns ArucoInfo objects for every Aruco it could find.
+    # Given an image, returns DigitalAruco objects for every Aruco it could find.
     def process_image(self, image):
         # 1. Pull out the arucos.
         dictionary = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
@@ -36,9 +35,17 @@ class GamesFrame:
         (corners, ids, rejected) = aruco.detectMarkers(image, dictionary, parameters=parameters)
 
         # 2. Make DigitalAruco objects for everything.
-        digital_arucos = []
+        anchors = []
+        pieces = []
         for (marker_corner, marker_id) in zip(corners, ids):
             phys_aruco_info = self.board_info.aruco_info_for(marker_id)
-            digital_arucos.append(DigitalAruco(marker_corner, marker_id, phys_aruco_info.size, phys_aruco_info.anchored))
+            if phys_aruco_info.anchored:
+                anchors.append(DigitalAruco(marker_corner, phys_aruco_info, self.cam_matrix, self.dist_coeff))
+            else:
+                pieces.append(DigitalAruco(marker_corner, phys_aruco_info, self.cam_matrix, self.dist_coeff))
 
-        return
+        # 3. Define piece positions.
+        for aru in pieces:
+            aru.to_board_position(anchors, self.board_info)
+
+        return pieces, anchors

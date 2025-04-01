@@ -5,7 +5,7 @@ from PhysicalAruco import PhysicalAruco
 import numpy as np
 
 class PhysicalBoardInfo:
-    def __init__(self, unanchored_arucos: list[PhysicalAruco], anchored_arucos: list[PhysicalAruco], valid_board_positions: list[(float, float)], cm_to_space: float = -1.0):
+    def __init__(self, unanchored_arucos: list[PhysicalAruco], anchored_arucos: list[PhysicalAruco], valid_board_positions: list[(float, float)], cm_to_space: float = 0):
         if len(unanchored_arucos) == 0:
             raise Exception("PhysicalBoardInfo: You must supply at least one unanchored_aruco.")
         if len(anchored_arucos) == 0:
@@ -40,10 +40,10 @@ class PhysicalBoardInfo:
         if len(self.valid_board_positions) == 1:
             return self.valid_board_positions[0]
 
-        min_distance = np.linalg.norm(board_position, self.valid_board_positions[0])
-        closest_pos = self.valid_board_positions[0]
-        for pos in self.valid_board_positions[1:]:
-            distance = np.linalg.norm(board_position, pos)
+        min_distance = 9999999
+        closest_pos = None
+        for pos in self.valid_board_positions[0:]:
+            distance = np.linalg.norm(np.array(board_position) - np.array(pos))
             if distance < min_distance:
                 min_distance = distance
                 closest_pos = pos
