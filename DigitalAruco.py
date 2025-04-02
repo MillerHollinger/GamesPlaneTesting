@@ -160,6 +160,13 @@ class DigitalAruco:
         best_origin[1] += 30
         cv2.putText(image, f"{self.phys.tag} {self.phys.id}", best_origin, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
 
+    def put_bounds(self, image):
+        # Put the lines of my corners on the image.
+        cornerOrder = [self.bot_l, self.top_l, self.top_r, self.bot_r, self.bot_l]
+        color = (255, 255, 255) if self.phys.anchored else (128, 255, 255)
+        for i in range(4):
+            cv2.line(image, cornerOrder[i], cornerOrder[i+1], color, 1)
+
     def string_info(self):
         defined = "DEFINED" if self.fully_defined() else "PARTIAL"
         return f"{defined} ArucoInfo ID {self.phys.id} ({self.phys.tag}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"

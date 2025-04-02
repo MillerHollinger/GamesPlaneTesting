@@ -24,5 +24,6 @@ pieces, anchors = game.process_image(image)
 
 for info in pieces + anchors:
     info.put_summary_graphic(image)
+    info.put_bounds(image)
 cv2.imshow("Image", image)
 cv2.waitKey(0)

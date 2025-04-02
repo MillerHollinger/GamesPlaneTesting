@@ -18,7 +18,7 @@ class DummyGame:
         )
         white_piece_arucos = PhysicalAruco.generate_many(
             [6, 7, 8, 9, 10], 
-            "black", 
+            "white", 
             1.66,
             False,
             [None for i in range(5)]
