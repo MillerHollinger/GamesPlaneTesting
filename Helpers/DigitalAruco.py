@@ -90,7 +90,9 @@ class DigitalAruco:
                 raise Exception("A marker in anchor_markers is not fully defined (call to_world_coordinates and set_board_position on each anchor)")
 
         # We use each anchor to extract an approximate board position, then average and round at the end.
-        pos_estimates = []
+        pos_estimates_x = []
+        pos_estimates_y = []
+        weights = []
 
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
@@ -105,12 +107,16 @@ class DigitalAruco:
             this_pos_estimate[0] += marker_data.closest_board_position[0]
             this_pos_estimate[1] += marker_data.closest_board_position[1]
 
-            pos_estimates.append(this_pos_estimate)
+            pos_estimates_x.append(this_pos_estimate[0])
+            pos_estimates_y.append(this_pos_estimate[1])
+
+            # TODO Come up with a more intentionally chosen conversion from distance to weight.
+            weights.append(1.0 / np.linalg.norm(rebased_tvec))
 
             #print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} estimates at {round(this_pos_estimate[0], 2), round(this_pos_estimate[1], 2)}")
 
         # Save the exact (decimal) board pos in case we need it.
-        self.exact_board_position = (sum(x for x, z in pos_estimates) / len(pos_estimates), sum(z for x, z in pos_estimates) / len(pos_estimates))
+        self.exact_board_position = [np.average(pos_estimates_x, weights=weights), np.average(pos_estimates_y, weights=weights)]
 
         # Ask the board for the closest space.
         self.closest_board_position = board.closest_valid_space(self.exact_board_position)
