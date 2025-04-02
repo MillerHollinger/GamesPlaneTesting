@@ -2,8 +2,8 @@
 # It allows you to extract deduced information about the image.
 # To use it:
 # 1. Instantiate the object with config information.
-# 2. Feed it in an image using .use_image(image)
-# 3. Query data about the image! (TODO Explain better)
+# 2. Feed it in an image using .process_image(image)
+# 3. Check the returned DigitalAruco objects for information!
 import yaml
 import numpy as np
 import cv2

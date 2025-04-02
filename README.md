@@ -112,7 +112,7 @@ board_info = PhysicalBoardInfo(
 )
 ```
 
-5. Last step -- create a GamesFrame alongside our camera's yaml calibration matrix, which will be passed in with the constructor.
+5. Last step -- create a GamesFrame with our camera's yaml calibration matrix, which will be passed in with the constructor.
 ```py
 self.gframe = GamesFrame(camera_yaml, board_info)
 ```

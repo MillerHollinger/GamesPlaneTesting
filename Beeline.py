@@ -5,39 +5,56 @@ from PhysicalBoardInfo import *
 from PhysicalAruco import *
 from GamesPlaneGame import *
 
-class DummyGame(GamesPlaneGame):
+class Beeline(GamesPlaneGame):
     def __init__(self, camera_yaml):
 
-        self.name = "Dummy Game"
+        self.name = "Beeline"
 
         # Define the arucos for this GamesPlane.
-        black_piece_arucos = PhysicalAruco.generate_many(
-            [1, 2, 3, 4, 5], 
+        blue_bees = PhysicalAruco.generate_many(
+            [1, 2, 3], 
             "black", 
             1.66,
             False,
-            [None for i in range(5)]
+            [None for i in range(3)]
         )
-        white_piece_arucos = PhysicalAruco.generate_many(
-            [6, 7, 8, 9, 10], 
+        red_bees = PhysicalAruco.generate_many(
+            [4, 5, 6], 
             "white", 
             1.66,
             False,
-            [None for i in range(5)]
+            [None for i in range(3)]
         )
-        anchor_arucos = PhysicalAruco.generate_many(
-            [11, 12, 13, 14, 15], 
+        anchors = PhysicalAruco.generate_many(
+            [11, 12, 13, 14], 
             "anchor", 
             5.05,
             True,
-            [(-1, 5), (5, 5), (-1, -1), (5, -1), (2, -2)]
+            [(-5.2, 0), (5.2, 0), (-5.2, 6), (5.2, 6)]
         )
 
         # Set up where pieces may be.
-        valid_board_pos = [(x, y) for y in range(5) for x in range(5)]
+        valid_board_pos = [
+            [0, 0],
+            [0, 2],
+            [0, 4],
+            [0, 6],
+            [1.73, 1],
+            [1.73, 3],
+            [1.73, 5],
+            [3.46, 2],
+            [3.46, 4],
+            [5.20, 3],
+            [-1.73, 1],
+            [-1.73, 3],
+            [-1.73, 5],
+            [-3.46, 2],
+            [-3.46, 4],
+            [-5.20, 3]
+        ]
 
         # Create the physical board.
-        board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
+        board_info = PhysicalBoardInfo(blue_bees + red_bees, anchors, valid_board_pos, 1.95)
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)

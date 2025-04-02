@@ -95,12 +95,13 @@ class DigitalAruco:
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
             _, rebased_tvec = DigitalAruco.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
-            # print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says an offset of {rebased_tvec}")
+            print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
             this_pos_estimate = [rebased_tvec[0] / board.cm_to_space, rebased_tvec[1] / board.cm_to_space]
 
             # Offset by the anchor's place.
+            print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says raw estimate of {this_pos_estimate}")
             this_pos_estimate[0] += marker_data.closest_board_position[0]
             this_pos_estimate[1] += marker_data.closest_board_position[1]
 
