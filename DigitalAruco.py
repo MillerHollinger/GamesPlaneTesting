@@ -137,7 +137,7 @@ class DigitalAruco:
         return rvec2_transformed, tvec2_transformed
     
     def __str__(self):
-        return f"{"Anchored" if self.phys.anchored else "Unanchored"} ArUco ID {self.phys.id}, board position {self.closest_board_position}"
+        return f"{'Anchored' if self.phys.anchored else 'Unanchored'} ArUco ID {self.phys.id}, board position {self.closest_board_position}"
 
     # Adds summary info onto an image.
     def put_summary_graphic(self, image):
