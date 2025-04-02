@@ -1,10 +1,9 @@
 # Entry point for testing the system.
 
-from Beeline import *
-from DummyGame import *
+from Games.DummyGame import *
 
 # Create an instance of the game.
-game = Beeline("./calib-dummy.yaml")
+game = DummyGame("./example-calibration.yaml")
 print(f"Starting instance of {game.name}")
 
 # Read in the picture.
