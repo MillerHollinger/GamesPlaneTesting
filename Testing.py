@@ -33,5 +33,6 @@ for y in range(4, -1, -1):
         result = result + str(to_board[x][y])
     print(result)
 
+
 cv2.imshow("Image", image)
 cv2.waitKey(0)

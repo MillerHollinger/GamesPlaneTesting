@@ -1,9 +1,9 @@
 # This is a dummy file that shows how you can use the GamesPlane pipeline to construct a board and game, and get information about pictures.
 
-from GamesFrame import *
-from PhysicalBoardInfo import *
-from PhysicalAruco import *
-from GamesPlaneGame import *
+from Helpers.GamesFrame import *
+from Helpers.PhysicalBoardInfo import *
+from Helpers.PhysicalAruco import *
+from .GamesPlaneGame import *
 
 class Beeline(GamesPlaneGame):
     def __init__(self, camera_yaml):
