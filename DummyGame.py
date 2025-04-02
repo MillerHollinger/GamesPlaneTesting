@@ -5,7 +5,7 @@ from PhysicalBoardInfo import *
 from PhysicalAruco import *
 
 class DummyGame:
-    def __init__(self):
+    def __init__(self, camera_yaml):
         self.name = "Dummy Game"
 
         # Define the arucos for this GamesPlane.
@@ -38,7 +38,7 @@ class DummyGame:
         board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
 
         # Set up the GamesFrame for the board.
-        self.gframe = GamesFrame("./calib-dummy.yaml", board_info)
+        self.gframe = GamesFrame(camera_yaml, board_info)
 
         # We're good to go. Now we can feed in images to the gframe using .process_image.
 

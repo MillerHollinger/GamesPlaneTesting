@@ -3,7 +3,7 @@
 from DummyGame import *
 
 # Create an instance of the game.
-game = DummyGame()
+game = DummyGame("./calib-dummy.yaml")
 print(f"Starting instance of {game.name}")
 
 # Read in the picture.
@@ -22,4 +22,7 @@ image = imutils.resize(image, width=IMAGE_SCALE)
 # Get the DigitalArucos from this picture.
 pieces, anchors = game.process_image(image)
 
-print(pieces[0])
+for info in pieces + anchors:
+    info.put_summary_graphic(image)
+cv2.imshow("Image", image)
+cv2.waitKey(0)

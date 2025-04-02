@@ -139,6 +139,27 @@ class DigitalAruco:
     def __str__(self):
         return f"{"Anchored" if self.phys.anchored else "Unanchored"} ArUco ID {self.phys.id}, board position {self.closest_board_position}"
 
+    # Adds summary info onto an image.
+    def put_summary_graphic(self, image):
+        image_center = np.array([image.shape[1] / 2, image.shape[0] / 2])
+        # Find the closest point to the center.
+        best_origin = [0, 0]
+        closest = 9999
+        for point in [self.top_l, self.top_r, self.bot_r, self.bot_l]:
+            distance = np.linalg.norm(image_center - point)
+            if distance < closest:
+                best_origin = list(point)
+                closest = distance
+
+        color = (255, 255, 255) if self.phys.anchored else (128, 255, 255)
+
+        # Add my position.
+        cv2.putText(image, str(self.closest_board_position), best_origin, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+
+        # Move down, add my tag and ID.
+        best_origin[1] += 30
+        cv2.putText(image, f"{self.phys.tag} {self.phys.id}", best_origin, cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+
     def string_info(self):
         defined = "DEFINED" if self.fully_defined() else "PARTIAL"
         return f"{defined} ArucoInfo ID {self.phys.id} ({self.phys.tag}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
