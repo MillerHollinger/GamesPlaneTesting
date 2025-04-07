@@ -3,7 +3,7 @@ import yaml
 import time
 from Games.DummyGame import *
 
-YAML = "josh_calibration.yaml"
+YAML = "tester.yaml"
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", type=str, required=True,
