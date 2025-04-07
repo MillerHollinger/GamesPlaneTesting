@@ -1,3 +1,19 @@
+"""
+NOTE 4/6/25:
+
+Arguments to run Testing_Video.py:
+-v: Path to video with ARUCO tag(s)
+-s: Scale factor s*(x,y) for frames
+-d: Delay (ms) between frames shown
+
+I rescale each element of camera_matrix by * s and each frame of the video linearly
+
+I process the images like you did in Testing.py and record latency stats at the end
+FPS and throughput looks good but the projected board coords are sometimes way off…
+
+I uploaded 2 test videos for debugging (camera calibrated to josh_calibration.yaml)
+"""
+
 import cv2
 import yaml
 import time
