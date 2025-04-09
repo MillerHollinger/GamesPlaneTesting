@@ -24,7 +24,7 @@ class TicTacToe(GamesPlaneGame):
         )
         o_arucos = PhysicalAruco.generate_many(
             [9, 10, 11, 12], # ArUco IDs 9 to 12.
-            "O", # Call it "X" 
+            "O", # Call it "O" 
             1.66, # 1.66 cm to a side.
             False, # Not stuck in place.
             [None for i in range(4)] # They're not stuck in place, so empty.
