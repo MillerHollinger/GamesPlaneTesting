@@ -19,7 +19,7 @@ import yaml
 import time
 from Games.DummyGame import *
 
-YAML = "tester.yaml"
+YAML = "good_calibration.yaml"
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", type=str, required=True,
