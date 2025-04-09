@@ -33,7 +33,8 @@ class PhysicalBoardInfo:
             if aru.id == id:
                 return aru
 
-        raise Exception(f"PhysicalBoardInfo: ArUco ID {id} does not exist in this context.")
+        return None
+        #raise Exception(f"PhysicalBoardInfo: ArUco ID {id} does not exist in this context.")
 
     # Given an X, Y board position (in board units, not cm), returns the closest valid_board_position.
     def closest_valid_space(self, board_position):
