@@ -10,9 +10,10 @@ class DummyGame(GamesPlaneGame):
 
         self.name = "Pong Hau K'i"
 
-        #set up aruco info 
+        # Set up aruco info 
 
         # Define the arucos for this GamesPlane.
+        
         
         pieces_arucos = PhysicalAruco.generate_many(
             [6, 7, 8, 9, 10], 
@@ -21,6 +22,8 @@ class DummyGame(GamesPlaneGame):
             False,
             [None for i in range(5)]
         )
+        
+
         anchor_arucos = PhysicalAruco.generate_many(
             [12, 13, 14, 15], 
             "anchor", 
@@ -30,10 +33,10 @@ class DummyGame(GamesPlaneGame):
         )
 
         # Set up where pieces may be.
-        valid_board_pos = [(x, y) for y in range(5) for x in range(5)]
+        valid_board_pos = [(-2.2, 2.7), (2.2, 2.7), (2.2, -2.2), (-2.2, -2.2), (0, 0)]
 
         # Create the physical board.
-        board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
+        board_info = PhysicalBoardInfo(pieces_arucos, anchor_arucos, valid_board_pos, 5.08)
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)
