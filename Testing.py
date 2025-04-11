@@ -1,9 +1,9 @@
 # Entry point for testing the system.
 
-from Games.DummyGame import *
+from Games.PongHauKi import *
 
 # Create an instance of the game.
-game = DummyGame("./example-calibration.yaml")
+game = PongHauKi("./example-calibration.yaml")
 print(f"Starting instance of {game.name}")
 
 # Read in the picture.
@@ -25,13 +25,6 @@ pieces, anchors = game.process_image(image)
 for info in pieces + anchors:
     info.put_summary_graphic(image)
     info.put_bounds(image)
-
-to_board = game.to_board(pieces)
-for y in range(4, -1, -1):
-    result = ""
-    for x in range(0, 5):
-        result = result + str(to_board[x][y])
-    print(result)
 
 
 cv2.imshow("Image", image)
