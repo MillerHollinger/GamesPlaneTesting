@@ -8,38 +8,35 @@ from .GamesPlaneGame import *
 class DummyGame(GamesPlaneGame):
     def __init__(self, camera_yaml):
 
-        self.name = "Dummy Game"
+        self.name = "Pong Hau K'i"
 
-        #set up aruco info 
+        # Set up aruco info 
 
         # Define the arucos for this GamesPlane.
-        black_piece_arucos = PhysicalAruco.generate_many(
-            [1, 2, 3, 4, 5], 
-            "black", 
-            1.66,
-            False,
-            [None for i in range(5)]
-        )
-        white_piece_arucos = PhysicalAruco.generate_many(
+        
+        
+        pieces_arucos = PhysicalAruco.generate_many(
             [6, 7, 8, 9, 10], 
             "white", 
             1.66,
             False,
             [None for i in range(5)]
         )
+        
+
         anchor_arucos = PhysicalAruco.generate_many(
-            [11, 12, 13, 14, 15], 
+            [12, 13, 14, 15], 
             "anchor", 
-            5.05,
+            5.08,
             True,
-            [(-1, 5), (5, 5), (-1, -1), (5, -1), (2, -2)]
+            [(-4, 2.8), (-4, -2.8), (4, 2.8), (4, -2.8)]
         )
 
         # Set up where pieces may be.
-        valid_board_pos = [(x, y) for y in range(5) for x in range(5)]
+        valid_board_pos = [(-2.2, 2.7), (2.2, 2.7), (2.2, -2.2), (-2.2, -2.2), (0, 0)]
 
         # Create the physical board.
-        board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
+        board_info = PhysicalBoardInfo(pieces_arucos, anchor_arucos, valid_board_pos, 5.08)
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)
