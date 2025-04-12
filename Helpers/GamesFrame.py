@@ -46,6 +46,7 @@ class GamesFrame:
 
         # 3. Define piece positions.
         for aru in pieces:
+            print(aru)
             aru.to_board_position(anchors, self.board_info)
 
         return pieces, anchors

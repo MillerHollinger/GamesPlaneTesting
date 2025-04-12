@@ -1,9 +1,12 @@
 # Entry point for testing the system.
 
-from Games.PongHauKi import *
+from Games.TicTacToe import TicTacToe
+import argparse
+import imutils
+import cv2
 
 # Create an instance of the game.
-game = PongHauKi("./example-calibration.yaml")
+game = TicTacToe("./example-calibration.yaml")
 print(f"Starting instance of {game.name}")
 
 # Read in the picture.
