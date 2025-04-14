@@ -39,6 +39,8 @@ class GamesFrame:
         pieces = []
         for (marker_corner, marker_id) in zip(corners, ids):
             phys_aruco_info = self.board_info.aruco_info_for(marker_id)
+            if phys_aruco_info == None:
+                continue
             if phys_aruco_info.anchored:
                 anchors.append(DigitalAruco(marker_corner, phys_aruco_info, self.cam_matrix, self.dist_coeff))
             else:
