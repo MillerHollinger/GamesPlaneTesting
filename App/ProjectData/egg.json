@@ -1,0 +1,41 @@
+{
+    "name": "egg",
+    "aruco_anchored": [
+        {
+            "id": 0,
+            "tag": "egg",
+            "size": 0.0,
+            "anchored": true,
+            "position": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "id": 0,
+            "tag": "eggg",
+            "size": 0.0,
+            "anchored": true,
+            "position": [
+                0.0,
+                0.0
+            ]
+        }
+    ],
+    "aruco_unanchored": [
+        {
+            "id": 0,
+            "tag": "gggggg",
+            "size": 0.0,
+            "anchored": false,
+            "position": null
+        }
+    ],
+    "valid_positions": [
+        [
+            0,
+            0
+        ]
+    ],
+    "cm_to_space": 4.0
+}

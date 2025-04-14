@@ -40,6 +40,7 @@ class DummyGame(GamesPlaneGame):
 
         # Create the physical board.
         board_info = PhysicalBoardInfo(black_piece_arucos + white_piece_arucos, anchor_arucos, valid_board_pos, 5.05)
+        self.board_info = board_info
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)

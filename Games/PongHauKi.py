@@ -8,7 +8,7 @@ from .GamesPlaneGame import *
 class PongHauKi(GamesPlaneGame):
     def __init__(self, camera_yaml):
 
-        self.name = ""
+        self.name = "Pong Hau K'i"
 
         # Define the arucos for this GamesPlane.
         anchor_arucos = PhysicalAruco.generate_many(
@@ -33,6 +33,7 @@ class PongHauKi(GamesPlaneGame):
 
         # Create the physical board.
         board_info = PhysicalBoardInfo(pieces_aruco, anchor_arucos, valid_board_pos, 5.08)
+        self.board_info = board_info
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)

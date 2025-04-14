@@ -1,0 +1,100 @@
+{
+    "name": "Tic Tac Toe",
+    "aruco_anchored": [
+        {
+            "id": 10,
+            "tag": "anchor",
+            "size": 5,
+            "anchored": true,
+            "position": [
+                -1,
+                2
+            ]
+        },
+        {
+            "id": 11,
+            "tag": "anchor",
+            "size": 5,
+            "anchored": true,
+            "position": [
+                3,
+                2
+            ]
+        },
+        {
+            "id": 12,
+            "tag": "anchor",
+            "size": 5,
+            "anchored": true,
+            "position": [
+                -1,
+                0
+            ]
+        },
+        {
+            "id": 13,
+            "tag": "anchor",
+            "size": 5,
+            "anchored": true,
+            "position": [
+                3,
+                0
+            ]
+        }
+    ],
+    "aruco_unanchored": [
+        {
+            "id": 1,
+            "tag": "x",
+            "size": 3,
+            "anchored": false,
+            "position": null
+        },
+        {
+            "id": 2,
+            "tag": "o",
+            "size": 3,
+            "anchored": false,
+            "position": null
+        }
+    ],
+    "valid_positions": [
+        [
+            0,
+            0
+        ],
+        [
+            0,
+            1
+        ],
+        [
+            0,
+            2
+        ],
+        [
+            1,
+            0
+        ],
+        [
+            1,
+            1
+        ],
+        [
+            1,
+            2
+        ],
+        [
+            2,
+            0
+        ],
+        [
+            2,
+            1
+        ],
+        [
+            2,
+            2
+        ]
+    ],
+    "cm_to_space": 5
+}

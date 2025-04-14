@@ -1,0 +1,84 @@
+{
+    "name": "Pong Hau K'i",
+    "aruco_anchored": [
+        {
+            "id": 12,
+            "tag": "anchor",
+            "size": 5.08,
+            "anchored": true,
+            "position": [
+                -4,
+                2.8
+            ]
+        },
+        {
+            "id": 13,
+            "tag": "anchor",
+            "size": 5.08,
+            "anchored": true,
+            "position": [
+                -4,
+                -2.8
+            ]
+        },
+        {
+            "id": 14,
+            "tag": "anchor",
+            "size": 5.08,
+            "anchored": true,
+            "position": [
+                4,
+                2.8
+            ]
+        },
+        {
+            "id": 15,
+            "tag": "anchor",
+            "size": 5.08,
+            "anchored": true,
+            "position": [
+                4,
+                -2.8
+            ]
+        }
+    ],
+    "aruco_unanchored": [
+        {
+            "id": 3,
+            "tag": "piece",
+            "size": 1.66,
+            "anchored": false,
+            "position": null
+        },
+        {
+            "id": 5,
+            "tag": "piece",
+            "size": 1.66,
+            "anchored": false,
+            "position": null
+        }
+    ],
+    "valid_positions": [
+        [
+            -2.2,
+            2.7
+        ],
+        [
+            2.2,
+            2.7
+        ],
+        [
+            2.2,
+            -2.2
+        ],
+        [
+            -2.2,
+            -2.2
+        ],
+        [
+            0,
+            0
+        ]
+    ],
+    "cm_to_space": 5.08
+}
