@@ -10,6 +10,8 @@ class DummyGame(GamesPlaneGame):
 
         self.name = "Dummy Game"
 
+        #set up aruco info 
+
         # Define the arucos for this GamesPlane.
         black_piece_arucos = PhysicalAruco.generate_many(
             [1, 2, 3, 4, 5], 
