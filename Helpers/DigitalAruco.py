@@ -16,7 +16,7 @@ from .PhysicalBoardInfo import *
 class DigitalAruco:
     def __init__(self, raw_corners, phys: PhysicalAruco, cam_matrix, dist_coeff):
         if raw_corners.shape != (1, 4, 2):
-            raise Exception(f"ArucoInfo object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
+            raise Exception(f"DigitalAruco object with invalid raw_corners: shape is {raw_corners.shape} (should be (4, 1, 2))")
 
         self.raw_corners = raw_corners
 
@@ -176,4 +176,4 @@ class DigitalAruco:
 
     def string_info(self):
         defined = "DEFINED" if self.fully_defined() else "PARTIAL"
-        return f"{defined} ArucoInfo ID {self.phys.id} ({self.phys.tag}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"
+        return f"{defined} DigitalAruco ID {self.phys.id} ({self.phys.tag}); center @ {self.center}; rvec {self.rvec}, tvec {self.tvec}; board position {self.closest_board_position} ({self.exact_board_position})"

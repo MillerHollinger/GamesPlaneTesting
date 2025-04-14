@@ -10,11 +10,13 @@ import cv2
 from cv2 import aruco
 from .PhysicalBoardInfo import *
 from .DigitalAruco import *
+import os
 
 class GamesFrame:
     def __init__(self, camera_yaml: str, board_info: PhysicalBoardInfo):
 
         # Load the calibration file.
+        print(os.getcwd())
         with open(camera_yaml) as stream:
             try:
                 yaml_data = yaml.safe_load(stream)
