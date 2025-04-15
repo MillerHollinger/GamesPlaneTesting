@@ -1,16 +1,12 @@
-"""
-Altered version of Josh's Testing_Video.py to work with a live camera.
-"""
-
 import cv2
-import yaml
-import time
-from Games.DummyGame import *
+import sys
+sys.path.append(".")
+from Games.DummyGameTTT import *
 import streamlit as st
 
 st.header("Live Feed Debug")
 
-YAML = "CameraCalibration\good_calibration.yaml"
+YAML = "CameraCalibration/good_calibration.yaml"
 
 if "camera" not in st.session_state:
     st.session_state.camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
