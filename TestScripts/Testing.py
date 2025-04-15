@@ -6,7 +6,7 @@ import imutils
 import cv2
 
 # Create an instance of the game.
-game = TicTacToe("Camera Calibration\good_calibration.yaml")
+game = TicTacToe("CameraCalibration\good_calibration.yaml")
 print(f"Starting instance of {game.name}")
 
 # Read in the picture.

@@ -7,10 +7,10 @@ import yaml
 import time
 from Games.DummyGame import *
 
-YAML = "good_calibration.yaml"
+YAML = "CameraCalibration\good_calibration.yaml"
 
 print("Attempting to access camera.")
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
 game = DummyGame(YAML)
 

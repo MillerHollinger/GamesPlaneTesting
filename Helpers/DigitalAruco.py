@@ -73,7 +73,9 @@ class DigitalAruco:
 
     # Converts my world coordinates to a board position given some information about the board and the locations of the markers.
     # anchor_markers is one or more anchor arucos used as reference points.
-    def to_board_position(self, anchor_markers: List[DigitalAruco], board: PhysicalBoardInfo):
+    def to_board_position(self, anchor_markers: List[DigitalAruco], board: PhysicalBoardInfo, give_reasoning: bool = False):
+        reasoning = []
+
         if self.phys.anchored:
             raise Exception("Tried to calculate the board position of an anchor, but anchors are precalculated.")
         
@@ -97,13 +99,13 @@ class DigitalAruco:
         for marker_data in anchor_markers:
             # Redefine the piece's pose in terms of the chosen anchor.
             _, rebased_tvec = DigitalAruco.change_basis(marker_data.rvec, marker_data.tvec, self.rvec, self.tvec)
-            #print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says an offset of {rebased_tvec}")
+            reasoning.append(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says an offset of {rebased_tvec}")
             
             # Use the tvec to get a board position.
             this_pos_estimate = [rebased_tvec[0] / board.cm_to_space, rebased_tvec[1] / board.cm_to_space]
 
             # Offset by the anchor's place.
-            #print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says raw estimate of {this_pos_estimate}")
+            reasoning.append(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} says raw estimate of {this_pos_estimate}")
             this_pos_estimate[0] += marker_data.closest_board_position[0]
             this_pos_estimate[1] += marker_data.closest_board_position[1]
 
@@ -113,7 +115,7 @@ class DigitalAruco:
             # TODO Come up with a more intentionally chosen conversion from distance to weight.
             weights.append(1.0 / np.linalg.norm(rebased_tvec))
 
-            #print(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} estimates at {round(this_pos_estimate[0], 2), round(this_pos_estimate[1], 2)}")
+            reasoning.append(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} estimates at {round(this_pos_estimate[0], 2), round(this_pos_estimate[1], 2)}")
 
         # Save the exact (decimal) board pos in case we need it.
         self.exact_board_position = [np.average(pos_estimates_x, weights=weights), np.average(pos_estimates_y, weights=weights)]
@@ -121,7 +123,10 @@ class DigitalAruco:
         # Ask the board for the closest space.
         self.closest_board_position = board.closest_valid_space(self.exact_board_position)
 
-        return self.closest_board_position
+        if not give_reasoning:
+            return self.closest_board_position
+        else:
+            return self.closest_board_position, reasoning
     
     # Changes the basis of the second rvec, tvec to be in the first.
     def change_basis(rvec1, tvec1, rvec2, tvec2):
