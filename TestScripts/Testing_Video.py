@@ -4,6 +4,7 @@ import time
 import sys
 sys.path.append(".")
 from Games.DummyGameTTT import *
+from CameraCalibration.auto_calibration import *
 
 YAML = "CameraCalibration/good_calibration.yaml"
 
@@ -20,24 +21,7 @@ args = vars(ap.parse_args())
 name = args["video"]
 scale= args["scale"]
 
-# RESCALE CALIB
-if scale != 1.0:
-    with open(YAML, "r") as file:
-        calib = yaml.safe_load(file)
-    
-    cam = calib["camera_matrix"]
-    cam[0][0] *= scale  # f_x
-    cam[1][1] *= scale  # f_y
-    cam[0][2] *= scale  # c_x
-    cam[1][2] *= scale  # c_y
-    
-    YAML = f"scaled_{scale}_{YAML}"
-    with open(YAML, "w") as file:
-        yaml.dump(calib, file)
-
 # CAMERA WINDOW
-game = DummyGame(YAML)
-print(f"Starting instance of {game.name}")
 cv2.namedWindow(name, cv2.WINDOW_NORMAL)
 
 if name == "LIVE":
@@ -46,6 +30,25 @@ if name == "LIVE":
 else:
     print("Processing video " + name)
     video = cv2.VideoCapture(name)
+
+# auto calibration
+_, image = video.read()
+h, w = image.shape[:2]
+yaml_str = get_calib_matrices(w, h, mode="yaml")
+
+# RESCALE CALIB
+if scale != 1.0:
+    calib = yaml.safe_load(yaml_str)
+    
+    cam = calib["camera_matrix"]
+    cam[0][0] *= scale  # f_x
+    cam[1][1] *= scale  # f_y
+    cam[0][2] *= scale  # c_x
+    cam[1][2] *= scale  # c_y
+    yaml_str = yaml.dump(calib)
+
+game = DummyGame(yaml_str)
+print(f"Starting instance of {game.name}")
 
 # PROCESS VIDEO
 times, ret = [], 1
