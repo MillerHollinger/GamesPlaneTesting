@@ -6,7 +6,7 @@ from Helpers.PhysicalBoardInfo import *
 from Helpers.PhysicalAruco import *
 from .GamesPlaneGame import *
 
-SIZE = 4.66 # cm
+SIZE = 4.88 # cm
 GRID = 3    # 3x3
 
 class DummyGame(GamesPlaneGame):

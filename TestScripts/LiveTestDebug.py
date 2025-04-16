@@ -1,3 +1,5 @@
+# python -m streamlit run TestScripts/LiveTestDebug.py
+
 import cv2
 import sys
 sys.path.append(".")
@@ -5,26 +7,24 @@ import streamlit as st
 from Games.DummyGameTTT import *
 from CameraCalibration.auto_calibration import *
 
-YAML = "CameraCalibration/good_calibration.yaml"
-
-st.header("Live Feed Debug")
-
+# CAMERA & GAME
 if "camera" not in st.session_state:
     st.session_state.camera = cv2.VideoCapture(0)
-
     # auto calibration
     _, image = st.session_state.camera.read()
     h, w = image.shape[:2]
     yaml_str = get_calib_matrices(w, h, mode="yaml")
-
+    # yaml string done
     st.session_state.game = DummyGame(yaml_str)
 
-run = st.checkbox('Activate Camera')
+# CAMERA WINDOW
+run = st.checkbox("Activate Camera")
 FRAME_WINDOW = st.image([])
-
+st.header("Live Feed Debug")
 st.subheader("Live Results")
 datafield = st.text("Waiting for data...")
 
+# PROCESS VIDEO
 while run:
     _, image = st.session_state.camera.read()
     try:
@@ -37,7 +37,7 @@ while run:
             info.put_bounds(image)
     except Exception:
         print("No viable arucos in frame.")
-    
+
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
 

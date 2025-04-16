@@ -1,3 +1,5 @@
+# python TestScripts/Test_Video.py -v ... -s ... -d ...
+
 import cv2
 import yaml
 import time
@@ -5,8 +7,6 @@ import sys
 sys.path.append(".")
 from Games.DummyGameTTT import *
 from CameraCalibration.auto_calibration import *
-
-YAML = "CameraCalibration/good_calibration.yaml"
 
 #ARGUMENT PARSE
 ap = argparse.ArgumentParser()
@@ -23,7 +23,6 @@ scale= args["scale"]
 
 # CAMERA WINDOW
 cv2.namedWindow(name, cv2.WINDOW_NORMAL)
-
 if name == "LIVE":
     print("Accessing live camera...")
     video = cv2.VideoCapture(0)
@@ -39,7 +38,6 @@ yaml_str = get_calib_matrices(w, h, mode="yaml")
 # RESCALE CALIB
 if scale != 1.0:
     calib = yaml.safe_load(yaml_str)
-    
     cam = calib["camera_matrix"]
     cam[0][0] *= scale  # f_x
     cam[1][1] *= scale  # f_y
@@ -66,18 +64,17 @@ while ret is not None:
         for info in pieces + anchors:
             info.put_summary_graphic(image)
             info.put_bounds(image)
-        # print(game.to_board(pieces))
     except Exception:
         print("No viable arucos in frame.")
     
+    if cv2.waitKey(args["delay"]) & 0xFF == ord("q"):
+        break
     cv2.imshow(name, image)
-    cv2.waitKey(args["delay"])
     times.append(time.time() - start_time)  # TIMER END
 
 # PROCESS STATS
 video.release()
 cv2.destroyAllWindows()
-
 if len(times) == 0:
     raise Exception("No viable frames in video.")
 avg_time = sum(times) / len(times)

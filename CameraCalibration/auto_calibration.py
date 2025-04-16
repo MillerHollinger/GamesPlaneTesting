@@ -1,6 +1,6 @@
 import yaml
 
-def get_calib_matrices(w, h, mode="dict"):
+def get_calib_matrices(w, h, mode="yaml"):
     """
     Given the width and height of the camera frame
         # initialize cam = cv2.VideoCapture(0),
@@ -13,18 +13,16 @@ def get_calib_matrices(w, h, mode="dict"):
     
     cx = w / 2
     cy = h / 2
-    f_l = max(w, h)
+    f_l = (w + h) / 2
     
     camera_matrix = [
         [f_l, 0.0, cx],
         [0.0, f_l, cy],
         [0.0, 0.0, 1.0]
     ]
-    dist_coeff = [[0, 0, 0, 0, 0]]
-    
     calib_matrices = {
         'camera_matrix': camera_matrix,
-        'dist_coeff': dist_coeff
+        'dist_coeff': [[0, 0, 0, 0, 0]]
     }
     if mode == "dict":
         return calib_matrices
