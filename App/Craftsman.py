@@ -207,7 +207,7 @@ pos_c = st.container()
 # When click the save button, save the data.
 if save:
     gpg = GamesPlaneGame(st.session_state.name, anchored, unanchored,
-                         [(0, 0)], st.session_state.cm_to_space, r"CameraCalibration\good_calibration.yaml")
+                         st.session_state.positions, st.session_state.cm_to_space, r"CameraCalibration\good_calibration.yaml")
 
     path = write_game(gpg)
 
