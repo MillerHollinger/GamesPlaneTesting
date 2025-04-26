@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
+import base64
 
 # Set up headless Chrome
 options = Options()
@@ -9,7 +10,7 @@ options.add_argument("--headless")  # run in the background
 driver = webdriver.Chrome(options=options)
 
 # Load the page
-driver.get("http://localhost:3000/uni/games/othello/variants/regular/1_-----BW--WB-----/board-overlay")
+driver.get("http://localhost:3000/uni/games/othello/variants/regular/board-overlay")
 
 # Wait for JavaScript to load (tweak as needed)
 time.sleep(3)
@@ -19,13 +20,16 @@ html = driver.page_source
 soup = BeautifulSoup(html, "html.parser")
 
 # Extract element by ID
-svg_element = driver.find_element("tag name", "svg")
-print(svg_element)
-svg_html = svg_element.get_attribute("outerHTML")
+data_url = soup.find("img", id="board-overlay")["src"]
 
-with open("output.svg", "w", encoding="utf-8") as f:
-    f.write(svg_html)
+# Step 1: Strip the prefix
+header, encoded = data_url.split(',', 1)
 
-print("SVG saved as output.svg")
+# Step 2: Decode base64
+image_data = base64.b64decode(encoded)
+
+# Step 3: Write to file
+with open("demo-out.png", "wb") as f:
+    f.write(image_data)
 
 driver.quit()

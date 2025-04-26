@@ -3,7 +3,7 @@
     "aruco_anchored": [
         {
             "id": 0,
-            "tag": "egg",
+            "tag": "eg",
             "size": 0.0,
             "anchored": true,
             "position": [
@@ -15,7 +15,7 @@
     "aruco_unanchored": [
         {
             "id": 0,
-            "tag": "eg",
+            "tag": "eggg",
             "size": 0.0,
             "anchored": false,
             "position": null
@@ -23,8 +23,8 @@
     ],
     "valid_positions": [
         [
-            0,
-            0
+            0.0,
+            0.0
         ]
     ],
     "cm_to_space": 4.0
