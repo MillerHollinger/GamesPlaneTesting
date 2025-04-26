@@ -9,7 +9,7 @@ def build_arucos(aruco_data: list):
     return [PhysicalAruco(v["id"], v["tag"], v["size"], v["anchored"], v["position"]) for v in aruco_data]
     
 # Given a path to a json game representation, return the resulting python object.
-def fetch_game(game_name: str, camera_yaml: str = r"Camera Calibration\good_calibration.yaml"):
+def fetch_game(game_name: str, camera_yaml: str = r"CameraCalibration\good_calibration.yaml"):
     json_path = r'.\App\ProjectData' + "\\" + game_name + ".json"
     with open(json_path, "r") as file:
         data = json.load(file)

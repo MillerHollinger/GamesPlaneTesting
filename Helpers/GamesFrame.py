@@ -6,29 +6,29 @@
 # 3. Check the returned DigitalAruco objects for information!
 import yaml
 import numpy as np
-import cv2
 from cv2 import aruco
 from .PhysicalBoardInfo import *
 from .DigitalAruco import *
-
+    
 class GamesFrame:
     def __init__(self, camera_yaml: str, board_info: PhysicalBoardInfo):
 
         # Load the calibration file.
-        with open(camera_yaml) as stream:
-            try:
-                yaml_data = yaml.safe_load(stream)
-                self.cam_matrix = np.array(yaml_data['camera_matrix'])
-                self.dist_coeff = np.array(yaml_data['dist_coeff'])
-            except:
-                print(f"GamesPlaneConfig failed to read from {camera_yaml}")
-                exit()
+        if ".yaml" in camera_yaml:
+            camera_yaml = open(camera_yaml)
+        try:
+            yaml_data = yaml.safe_load(camera_yaml)
+            self.cam_matrix = np.array(yaml_data['camera_matrix'])
+            self.dist_coeff = np.array(yaml_data['dist_coeff'])
+        except:
+            print(f"GamesPlaneConfig failed to read from {camera_yaml}")
+            exit()
         
         # Record the board info.
         self.board_info = board_info
 
     # Given an image, returns DigitalAruco objects for every Aruco it could find.
-    def process_image(self, image):
+    def process_image(self, image, give_reasoning: bool = False):
         # 1. Pull out the arucos.
         dictionary = aruco.getPredefinedDictionary(aruco.DICT_ARUCO_ORIGINAL)
         parameters = aruco.DetectorParameters()
@@ -37,6 +37,11 @@ class GamesFrame:
         # 2. Make DigitalAruco objects for everything.
         anchors = []
         pieces = []
+        reasoning = []
+
+        if len(corners) == 0:
+            return pieces, anchors, reasoning
+
         for (marker_corner, marker_id) in zip(corners, ids):
             phys_aruco_info = self.board_info.aruco_info_for(marker_id)
             if phys_aruco_info == None:
@@ -47,8 +52,13 @@ class GamesFrame:
                 pieces.append(DigitalAruco(marker_corner, phys_aruco_info, self.cam_matrix, self.dist_coeff))
 
         # 3. Define piece positions.
-        for aru in pieces:
-            print(aru)
-            aru.to_board_position(anchors, self.board_info)
+        if len(anchors) > 0:
+            for aru in pieces:
+                print(aru)
+                _, reason = aru.to_board_position(anchors, self.board_info, give_reasoning)
+                reasoning.append(reason)
 
-        return pieces, anchors
+        if not give_reasoning:
+            return pieces, anchors
+        else:
+            return pieces, anchors, reasoning

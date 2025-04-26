@@ -1,0 +1,68 @@
+{
+    "name": "Dao",
+    "aruco_anchored": [
+        {
+            "id": 12,
+            "tag": "anchor1",
+            "size": 4.57,
+            "anchored": true,
+            "position": [
+                -1.0,
+                3.0
+            ]
+        },
+        {
+            "id": 13,
+            "tag": "anchor2",
+            "size": 4.57,
+            "anchored": true,
+            "position": [
+                -1.0,
+                0.0
+            ]
+        },
+        {
+            "id": 14,
+            "tag": "anchor3",
+            "size": 4.57,
+            "anchored": true,
+            "position": [
+                4.0,
+                3.0
+            ]
+        },
+        {
+            "id": 15,
+            "tag": "anchor4",
+            "size": 4.57,
+            "anchored": true,
+            "position": [
+                4.0,
+                0.0
+            ]
+        }
+    ],
+    "aruco_unanchored": [
+        {
+            "id": 1,
+            "tag": "black",
+            "size": 2.0,
+            "anchored": false,
+            "position": null
+        },
+        {
+            "id": 2,
+            "tag": "white",
+            "size": 2.0,
+            "anchored": false,
+            "position": null
+        }
+    ],
+    "valid_positions": [
+        [
+            0,
+            0
+        ]
+    ],
+    "cm_to_space": 4.57
+}
