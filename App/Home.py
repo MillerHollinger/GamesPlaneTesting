@@ -3,24 +3,28 @@ from App.ConvertJSON import fetch_game, write_game
 from Helpers.PhysicalAruco import PhysicalAruco
 from Games.GamesPlaneGame import GamesPlaneGame
 
-# TODO Ensure everything in this is saved as session data so you can come back later.
+# This file uses Streamlit to build the UI.
+# Streamlit docs: https://docs.streamlit.io/
 
-# Title
+# TODO Load data from a json to edit.
+
+# Title and Header
 st.set_page_config(page_title="Welcome to GamesPlane")
+st.header("Game Editor")
 
-# JSON Display
-#obj = fetch_game("Dummy Game")
-
+# Create session information.
 if "anchored" not in st.session_state:
     st.session_state.anchored = []
     st.session_state.unanchored = []
     pass
 
+# Helper function. Edit buttons call this.
 def make_editor(phys_aruco):
     return lambda: define_aruco(phys_aruco)
 
+# Defines an ArUco.
+# If an ArUco argument is provided, it edits that ArUco instead.
 @st.dialog("Define an ArUco")
-# TODO Make the editing work.
 def define_aruco(phys_aruco = None):
     if phys_aruco == None:
         st.write("Specify information about a new ArUco marker.")
@@ -48,13 +52,15 @@ def define_aruco(phys_aruco = None):
             ))
             st.rerun()
 
-st.header("Game Editor")
+# Top section of page: Name and CM to space
 top1, top2 = st.columns(2)
 name = top1.text_input("Game Name", help="The name of your game. This will be used to save the game, so do not use the same name as another game.")
 cm_to_space = top2.number_input("Centimeters to Space", help="How many cm equates to one board space unit.  \nFor example, on a checkboard with 5cm wide spaces, you'd put 5cm.")
 
+# ArUco display container
 aru_c = st.container(border=True)
 
+# Shows an aruco's information as a bar
 def show_aruco(phys_aruco):
     c = aru_c.container(border=True)
     col1, col2, col3, col4, col5, col6 = c.columns(6)
@@ -64,30 +70,38 @@ def show_aruco(phys_aruco):
     col4.write(f"{phys_aruco.size} cm")
     col5.write(f"at ({phys_aruco.board_position[0]}, {phys_aruco.board_position[1]})" if phys_aruco.anchored else "")
     
-    # TODO Make these buttons work
     b1, b2 = col6.columns(2)
     b1.button("✏️", key=f"{phys_aruco.tag} {phys_aruco.anchored} {phys_aruco.board_position} edit", on_click=make_editor(phys_aruco))
+    # TODO Trash button
     b2.button("🗑️", key=f"{phys_aruco.tag} {phys_aruco.anchored} {phys_aruco.board_position} trash")
 
+# Show anchored arucos
 aru_c.subheader("Anchored ArUcos", divider="red")
-
 if len(st.session_state.anchored) > 0:
     for aru in st.session_state.anchored:
         show_aruco(aru)
 else:
     aru_c.caption("No Anchored ArUcos added yet. Add some with the Add New ArUco button!")
 
+# Show unanchored arucos
 aru_c.subheader("Unanchored ArUcos", divider="blue")
-
 if len(st.session_state.unanchored) > 0:
     for aru in st.session_state.unanchored:
         show_aruco(aru)
 else:
     aru_c.caption("No Unanchored ArUcos added yet. Add some with the Add New ArUco button!")
 
+# Button to add a new aruco
 if aru_c.button("Add New ArUco"):
     define_aruco(aru_c)
 
+# TODO Add board positions.
+pos_c = st.container(border=True)
+pos_c.subheader("Board Positions")
+
+# TODO Add board PDF.
+
+# Get and show the current issues with data entered so far
 def get_errors_and_warnings():
     errors = []
     warnings = []
@@ -110,7 +124,6 @@ def get_errors_and_warnings():
     
     return errors, warnings
 
-
 errors, warnings = get_errors_and_warnings()
 if len(errors) > 0 or len(warnings) > 0:
     for r in errors:
@@ -120,10 +133,12 @@ if len(errors) > 0 or len(warnings) > 0:
 else:
     st.success("Ready to save!")
 
+# Save button at bottom of the page.
 save = st.button("Save", disabled=len(errors) != 0, type="primary")
 
 pos_c = st.container()
 
+# When click the save button, save the data.
 if save:
     gpg = GamesPlaneGame(name, st.session_state.anchored, st.session_state.unanchored,
                          [(0, 0)], cm_to_space, r"Camera Calibration\good_calibration.yaml")
