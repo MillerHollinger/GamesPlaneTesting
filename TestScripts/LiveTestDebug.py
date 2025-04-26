@@ -24,15 +24,18 @@ datafield = st.text("Waiting for data...")
 
 while run:
     _, image = st.session_state.camera.read()
-    pieces, anchors, reasoning = st.session_state.game.gframe.process_image(image, True)
+    try:
+        pieces, anchors, reasoning = st.session_state.game.gframe.process_image(image, True)
 
-    datafield.write(f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n" + "  \n".join(["  \n".join([a for a in r]) for r in reasoning]))
+        datafield.write(f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n" + "  \n".join(["  \n".join([a for a in r]) for r in reasoning]))
 
-    for info in pieces + anchors:
-        info.put_summary_graphic(image)
-        info.put_bounds(image)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    FRAME_WINDOW.image(image)
+        for info in pieces + anchors:
+            info.put_summary_graphic(image)
+            info.put_bounds(image)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        FRAME_WINDOW.image(image)
+    except Exception as e:
+        pass
 
 if not run:
     st.warning('Video stopped. Click Activate Camera to start the feed.')

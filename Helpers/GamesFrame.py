@@ -10,7 +10,7 @@ import cv2
 from cv2 import aruco
 from .PhysicalBoardInfo import *
 from .DigitalAruco import *
-
+    
 class GamesFrame:
     def __init__(self, camera_yaml: str, board_info: PhysicalBoardInfo):
 

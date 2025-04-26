@@ -38,6 +38,7 @@ def define_aruco(phys_aruco = None):
     size = st.number_input("Size (cm)", help="The size of one of this ArUco's edges in centimeters.", value=default_size)
     anchored = st.checkbox("Anchored", help="If this ArUco is anchored.  \nCheck if this ArUco is attached to the board. Uncheck if it's on a game piece.", value=default_anchored)
     if anchored:
+        
         col1, col2 = st.columns(2)
         pos_x = col1.number_input("Position X", help="Horizontal position in board units. Rightwards is positive.", value=default_posX)
         pos_y = col2.number_input("Position Y", help="Vertical position in board units. Upwards is positive.", value=default_posY)
@@ -152,8 +153,8 @@ save = st.button("Save", disabled=len(errors) != 0, type="primary")
 pos_c = st.container()
 
 if save:
-    gpg = GamesPlaneGame(st.session_state.name, st.session_state.anchored, st.session_state.unanchored,
-                         [(0, 0)], st.session_state.cm_to_space, r"Camera Calibration\good_calibration.yaml")
+    gpg = GamesPlaneGame(st.session_state.name, anchored, unanchored,
+                         [(0, 0)], st.session_state.cm_to_space, r"C:\Users\holli\Desktop\GamesPlane\CameraCalibration\good_calibration.yaml")
 
     path = write_game(gpg)
     st.write(f"Saved game to {path}!")

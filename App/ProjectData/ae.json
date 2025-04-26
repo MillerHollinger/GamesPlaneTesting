@@ -1,0 +1,41 @@
+{
+    "name": "ae",
+    "aruco_anchored": [
+        {
+            "id": 0,
+            "tag": "wa",
+            "size": 0.0,
+            "anchored": true,
+            "position": [
+                0.0,
+                0.0
+            ]
+        },
+        {
+            "id": 0,
+            "tag": "aw",
+            "size": 0.0,
+            "anchored": true,
+            "position": [
+                0.0,
+                0.0
+            ]
+        }
+    ],
+    "aruco_unanchored": [
+        {
+            "id": 0,
+            "tag": "ee",
+            "size": 0.0,
+            "anchored": false,
+            "position": null
+        }
+    ],
+    "valid_positions": [
+        [
+            0,
+            0
+        ]
+    ],
+    "cm_to_space": 3.0
+}
