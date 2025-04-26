@@ -9,14 +9,16 @@ from Games.GamesPlaneGame import GamesPlaneGame
 # TODO Load data from a json to edit.
 
 # Title and Header
-st.set_page_config(page_title="Welcome to GamesPlane")
-st.header("Game Editor")
+st.set_page_config(page_title="Craftsman - GamesPlane")
+st.header("Craftsman", help="Craftsman is GamesPlane's tool for defining new games.  \nSet up your game's ArUco and board information here!")
 
+st.subheader("Set Up a Game")
 # JSON Display
 #obj = fetch_game("Dummy Game")
 
 if "arucos" not in st.session_state:
     st.session_state.arucos = []
+    st.session_state.positions = []
     pass
 
 # Helper function. Edit buttons call this.
@@ -127,11 +129,40 @@ else:
 if aru_c.button("Add New ArUco"):
     define_aruco()
 
-# TODO Add board positions.
+# Add board positions.
 pos_c = st.container(border=True)
-pos_c.subheader("Board Positions")
+pos_c.subheader("Board Positions", divider="grey")
+
+def pos_index_deleter(index):
+    return lambda: st.session_state.positions.pop(index)
+
+def show_board_pos(pos, index):
+    c = pos_c.container(border=True)
+    c1, c2 = c.columns(2)
+    c1.text(f"({pos[0]}, {pos[1]})")
+    c2.button("🗑️", key=f"{index} trash", on_click=pos_index_deleter(index))
+
+for i in range(len(st.session_state.positions)):
+    show_board_pos(st.session_state.positions[i], i)
+
+@st.dialog("Add a Board Position")
+def add_board_pos():
+    col1, col2 = st.columns(2)
+    pos_x = col1.number_input("Position X", key="add_pos_x", help="Horizontal position in board units. Rightwards is positive.", value=0.0)
+    pos_y = col2.number_input("Position Y", key="add_pos_y", help="Vertical position in board units. Upwards is positive.", value=0.0)
+    if st.button("Add Board Position", key="add_pos"):
+        st.session_state.positions.append((pos_x, pos_y))
+        st.rerun()
+
+if pos_c.button("Add Board Position"):
+    add_board_pos()
 
 # TODO Add board PDF.
+uploaded_file = st.file_uploader("Game Board PDF (optional)", type="pdf", help="The PDF of your game's board. Your PDF will be saved for easy retrieval.")
+
+def save_uploaded_pdf(uploaded_file, save_path):
+    with open(save_path, 'wb') as f:
+        f.write(uploaded_file.getbuffer())
 
 # Get and show the current issues with data entered so far
 def get_errors_and_warnings():
@@ -139,7 +170,7 @@ def get_errors_and_warnings():
     warnings = []
 
     if st.session_state.name == "":
-        errors.append("✏️ Add a name to the game.")
+        errors.append("✏️ Set a name for the game.")
 
     if st.session_state.cm_to_space == 0:
         errors.append("📏 Enter a nonzero value for centimeters per board space.")
@@ -153,6 +184,9 @@ def get_errors_and_warnings():
     
     if len(unanchored) == 0:
         warnings.append("♟️ No unanchored ArUcos (pieces) are defined.")
+
+    if len(st.session_state.positions) == 0:
+        errors.append("🗺️ Define at least one board position.")
     
     return errors, warnings
 
@@ -173,7 +207,11 @@ pos_c = st.container()
 # When click the save button, save the data.
 if save:
     gpg = GamesPlaneGame(st.session_state.name, anchored, unanchored,
-                         [(0, 0)], st.session_state.cm_to_space, r"C:\Users\holli\Desktop\GamesPlane\CameraCalibration\good_calibration.yaml")
+                         [(0, 0)], st.session_state.cm_to_space, r"CameraCalibration\good_calibration.yaml")
 
     path = write_game(gpg)
+
+    if uploaded_file is not None:
+        save_uploaded_pdf(uploaded_file, f"./App/PDFs/{st.session_state.name}.pdf")
+
     st.write(f"Saved game to {path}!")

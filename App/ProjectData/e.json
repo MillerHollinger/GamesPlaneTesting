@@ -1,9 +1,9 @@
 {
-    "name": "egg",
+    "name": "e",
     "aruco_anchored": [
         {
             "id": 0,
-            "tag": "egg",
+            "tag": "ee",
             "size": 0.0,
             "anchored": true,
             "position": [
@@ -15,7 +15,7 @@
     "aruco_unanchored": [
         {
             "id": 0,
-            "tag": "eg",
+            "tag": "e",
             "size": 0.0,
             "anchored": false,
             "position": null
