@@ -8,12 +8,13 @@ from App.ConvertJSON import fetch_game
 from CameraCalibration.auto_calibration import *
 from App.BoardFetcher import BoardFetcher
 import asyncio
+import numpy as np
 
 # 1. Setup.
 if "camera" not in st.session_state:
     st.session_state.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     st.session_state.game = fetch_game("Dao")
-    st.session_state.fetcher = BoardFetcher("Dao", "regular")
+    st.session_state.fetcher = BoardFetcher("dao", "regular")
 
     print("Camera and game are set up.")
 
@@ -57,10 +58,56 @@ POS_TO_IDX = {
     }
 }
 
+
+def overlay_image(background, foreground, x, y):
+    """
+    Overlay `foreground` onto `background` at position (x, y).
+    Handles alpha channel if present.
+    
+    Args:
+        background (np.ndarray): Background image (BGR).
+        foreground (np.ndarray): Foreground image (BGRA or BGR).
+        x (int): Top-left x position on background.
+        y (int): Top-left y position on background.
+
+    Returns:
+        np.ndarray: New image with the foreground overlayed on background.
+    """
+    bg = background.copy()
+    
+    fg_h, fg_w = foreground.shape[:2]
+    #print(f"Image shape {bg.shape[1]} {bg.shape[0]}")
+
+    # Make sure the foreground fits within the background
+    if x + fg_w > bg.shape[1] or y + fg_h > bg.shape[0]:
+        raise ValueError("Foreground image goes outside the background bounds.")
+
+    # Check if foreground has alpha channel
+    if foreground.shape[2] == 4:
+        # Split channels
+        fg_rgb = foreground[..., :3]
+        alpha = foreground[..., 3] / 255.0  # Normalize alpha to [0, 1]
+        
+        # Extract ROI from background
+        roi = bg[y:y+fg_h, x:x+fg_w]
+
+        # Blend the ROI and foreground
+        blended = (alpha[..., None] * fg_rgb + (1 - alpha[..., None]) * roi).astype(np.uint8)
+
+        # Replace the ROI on background
+        bg[y:y+fg_h, x:x+fg_w] = blended
+    else:
+        # No alpha channel, just overwrite the region
+        bg[y:y+fg_h, x:x+fg_w] = foreground
+
+    return bg
+
 # PROCESS VIDEO
 # 2. Loop:
 
 state_votes = {}
+total_votes = 0
+MIN_VOTES_TO_RENDER = 20 # You need this many votes before web requests will be sent out.
 
 while run:
     # Get image.
@@ -80,11 +127,11 @@ while run:
     # Now, try to show the board state as well.
     # 1. Verify the board state makes sense:
     # - Must find 8 pieces, 4 black and 4 white.
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    FRAME_WINDOW.image(image)
     
     #print(f"Found {len(pieces)} pieces and {len(anchors)} anchors")
     if len(pieces) != 8 or len(anchors) == 0:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        FRAME_WINDOW.image(image)
         #print("Can't see all 8 pieces and at least one anchor.")
         continue
     # ignoring - Must find 4 anchors. (for now)
@@ -96,7 +143,7 @@ while run:
     board_string = "1_"
     board_rep = [["-" for i in range(4)] for k in range(4)]
     for piece in pieces:
-        name = "X" if piece.phys.id == 1 else "O"
+        name = "O" if piece.phys.id == 1 else "X"
         #print(piece.closest_board_position)
         board_pos = POS_TO_IDX[piece.closest_board_position[0]][piece.closest_board_position[1]]
         board_rep[board_pos[0]][board_pos[1]] = name
@@ -110,13 +157,31 @@ while run:
         state_votes[board_string] += 1
     else:
         state_votes[board_string] = 1
-    
-    most_votes = max(state_votes, key=state_votes.get)
-    print(most_votes)
-            
+    total_votes += 1
 
+    # Wipe votes every 150 for up-to-date info.
+    if total_votes >= 150:
+        #print("Resetting votes.")
+        total_votes = 0
+        state_votes = {}
+    
+    if total_votes >= MIN_VOTES_TO_RENDER:
+        most_votes = max(state_votes, key=state_votes.get)
+        print(most_votes)
         # 2. Send off a web request.
-        # 3. Show the current moves suggestion image in a separate window.
+        #print("Going to try to fetch a png.")
+        asyncio.run(st.session_state.fetcher.get_svg_for(most_votes))
+
+        if most_votes in st.session_state.fetcher.board_cache:
+            #print("Got an overlay.")
+            image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
+        # 3. Show the current moves suggestion image on top.
+        else:
+            pass
+            #print("Not ready to show an image yet.")
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        FRAME_WINDOW.image(image)
 
         
     # except Exception as e:

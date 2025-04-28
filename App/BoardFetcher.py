@@ -50,25 +50,52 @@ class BoardFetcher:
 
         print("After")
 
+        #print(f"Got back {soup.contents}")
+
         # Extract element by ID
-        data_url = soup.find("img", id="board-overlay")["src"]
-        # Remove prefix info
-        header, encoded = data_url.split(',', 1)
+        try:
+            data_url = soup.find("img", id="board-overlay")["src"]
+            # Remove prefix info
+            header, encoded = data_url.split(',', 1)
+            print(header)
 
-        print("About to write")
+            print("About to write")
 
-        # Decode and save to cache.
-        image_data = base64.b64decode(encoded)
+            # Assume 'encoded' is your full base64-encoded PNG
+            image_data = base64.b64decode(encoded)
+            print("image data")
+            with open("TestScripts/TEMP_Overlays/debug-pic.png", "wb") as f:
+                f.write(image_data)
+            #print(image_data)
 
-        image_stream = io.BytesIO(image_data)
-        image_np = np.frombuffer(image_stream.read(), dtype=np.uint8)  # Convert the BytesIO to a NumPy array
-        image_cv = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
-        #image_cv = cv2.resize(image_cv, (500, 500))
+            # Full image data!
+            image_np = np.frombuffer(image_data, dtype=np.uint8)
+            print("image np")
+            print(image_np)
+            
 
-        self.board_cache[board_state] = image_cv
-        self.loaded[board_state] = True
+            # Decode full PNG
+            image_cv = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
+            #print(image_cv)
 
-        cv2.imshow(f"{self.name} : {board_state}", self.board_cache[board_state])
+            # Safety check
+            if image_cv is None:
+                raise ValueError("Failed to decode image.")
+            #print("Resizing...")
+            # Now safe to resize
+            image_cv = cv2.resize(image_cv, (200, 200), interpolation=cv2.INTER_AREA)
+            #print(image_cv)
+
+            self.board_cache[board_state] = image_cv
+            cv2.imwrite(f'TestScripts\TEMP_Overlays\{board_state}.png', image_cv)
+            self.loaded[board_state] = True
+
+            print("Wrote a board state from the web.")
+        except:
+            print(f"Invalid board state {board_state} was queried.")
+            self.loaded[board_state] = True
+
+        #cv2.imshow(f"{self.name} : {board_state}", self.board_cache[board_state])
 
         print("Done.")
 
