@@ -54,7 +54,7 @@ class GamesFrame:
         # 3. Define piece positions.
         if len(anchors) > 0:
             for aru in pieces:
-                print(aru)
+                #print(aru)
                 _, reason = aru.to_board_position(anchors, self.board_info, give_reasoning)
                 reasoning.append(reason)
 

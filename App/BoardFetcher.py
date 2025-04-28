@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 import base64
 import asyncio
 import io
-import keyboard  # Import the keyboard module
 import numpy as np
 import cv2
 import datetime
