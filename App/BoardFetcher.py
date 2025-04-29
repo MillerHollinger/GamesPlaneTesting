@@ -75,7 +75,7 @@ class BoardFetcher:
             
 
             # Decode full PNG
-            image_cv = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
+            image_cv = cv2.imdecode(image_np, cv2.IMREAD_UNCHANGED)
             #print(image_cv)
 
             # Safety check
@@ -104,7 +104,7 @@ class BoardFetcher:
         if board_state in self.board_cache:
             return self.board_cache[board_state]
 
-        self.board_cache[board_state] = cv2.imread(self.LOADING_IMAGE, cv2.IMREAD_COLOR)   # Default to loading logo.
+        self.board_cache[board_state] = cv2.imread(self.LOADING_IMAGE, cv2.IMREAD_UNCHANGED)   # Default to loading logo.
         self.loaded[board_state] = False
 
         # Begin trying to load the web picture.
