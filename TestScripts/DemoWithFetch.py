@@ -59,6 +59,55 @@ POS_TO_IDX = {
 }
 
 
+def warp_and_overlay(background, foreground, dst_points):
+    """
+    Warps the foreground image to the given four destination points
+    and overlays it onto the background image.
+
+    Parameters:
+        background (np.ndarray): The background image.
+        foreground (np.ndarray): The foreground image to be transformed.
+        dst_points (np.ndarray): 4x2 array of destination points in (x, y) order.
+
+    Returns:
+        np.ndarray: The background image with the warped foreground overlaid.
+    """
+    h, w = foreground.shape[:2]
+
+    # Source points from the foreground image corners
+    src_points = np.float32([
+        [0, 0],
+        [w - 1, 0],
+        [w - 1, h - 1],
+        [0, h - 1]
+    ])
+
+    dst_points = np.float32(dst_points)
+
+    # Compute the perspective transform matrix
+    M = cv2.getPerspectiveTransform(src_points, dst_points)
+
+    # Warp the foreground image to the destination quadrilateral
+    warped = cv2.warpPerspective(foreground, M, (background.shape[1], background.shape[0]))
+
+    # Create a mask from the warped image
+    warped_gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(warped_gray, 1, 255, cv2.THRESH_BINARY)
+
+    # Invert the mask for background
+    mask_inv = cv2.bitwise_not(mask)
+
+    # Black-out the area of the warped image in the background
+    background_area = cv2.bitwise_and(background, background, mask=mask_inv)
+
+    # Take only the warped image region
+    warped_area = cv2.bitwise_and(warped, warped, mask=mask)
+
+    # Add the two together
+    result = cv2.add(background_area, warped_area)
+
+    return result
+
 def overlay_image(background, foreground, x, y):
     """
     Overlay `foreground` onto `background` at position (x, y).

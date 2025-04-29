@@ -29,15 +29,10 @@ create, edit, and play games supported by GamesmanUni with AR move hints.
 "##### Where to next?"
 # TODO Make these link directly to the destination pages.
 """
-**I want to play an existing game!** ➡️ Click **Play Now** in the sidebar.  
+**I want to play an existing game!** ➡️ Click **Launch Game** in the sidebar.  
 **I want to learn the basics!** ➡️ Click **Starter Guide** in the sidebar.  
 **I want to add a new game!** ➡️ Click **Craftsman** in the sidebar.  
 **I want to see the full docs!** ➡️ Click **Docs** in the sidebar.  
 """
-
-
-# To include:
-# What is GamesPlane
-# What are the other tabs and which should you go to
 
 "*made with ❤️ by Miller Hollinger, MS 2025*"
