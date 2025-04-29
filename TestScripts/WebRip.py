@@ -1,18 +1,18 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
 import time
 import base64
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-# Set up headless Chrome
+# Setup headless Chrome
 options = Options()
-options.add_argument("--headless")  # run in the background
+options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
 
 # Load the page
 driver.get("http://localhost:3000/uni/games/othello/variants/regular/board-overlay")
 
-# Wait for JavaScript to load (tweak as needed)
+# Wait for JS load (tweak as needed)
 time.sleep(3)
 
 # Get page source after JS execution
@@ -22,8 +22,8 @@ soup = BeautifulSoup(html, "html.parser")
 # Extract element by ID
 data_url = soup.find("img", id="board-overlay")["src"]
 
-# Step 1: Strip the prefix
-header, encoded = data_url.split(',', 1)
+# Step 1: Strip prefix
+header, encoded = data_url.split(",", 1)
 
 # Step 2: Decode base64
 image_data = base64.b64decode(encoded)
