@@ -90,6 +90,10 @@ def warp_and_overlay(background, foreground, dst_points):
     # Warp the foreground image to the destination quadrilateral
     warped = cv2.warpPerspective(foreground, M, (background.shape[1], background.shape[0]))
 
+    # Add alpha channel to background
+    alpha = np.full((background.shape[0], background.shape[1], 1), 255, dtype=np.uint8)
+    background = np.concatenate((background, alpha), axis=2)
+
     # Create a mask from the warped image
     warped_gray = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
     _, mask = cv2.threshold(warped_gray, 1, 255, cv2.THRESH_BINARY)
@@ -178,7 +182,7 @@ while run:
     # - Must find 8 pieces, 4 black and 4 white.
     
     #print(f"Found {len(pieces)} pieces and {len(anchors)} anchors")
-    if len(pieces) != 8 or len(anchors) == 0:
+    if len(pieces) != 8 or len(anchors) != 4:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         FRAME_WINDOW.image(image)
         #print("Can't see all 8 pieces and at least one anchor.")
@@ -221,10 +225,24 @@ while run:
         #print("Going to try to fetch a png.")
         asyncio.run(st.session_state.fetcher.get_svg_for(most_votes))
 
+        correct_order = {
+            12: 1,
+            13: 4,
+            14: 2,
+            15: 3
+        }
+        
         if most_votes in st.session_state.fetcher.board_cache:
-            #print("Got an overlay.")
+            print("Got an overlay.")
             #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
-            image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], ((40, 0), (200, 10), (10, 300), (300, 330)))
+            white_square = np.full((100, 100, 4), 255, dtype=np.uint8)
+
+            # TODO Get correct positions to display over.
+            display_corners = [a.center for a in sorted(anchors, key=lambda a: correct_order[a.phys.id])]
+
+            image = warp_and_overlay(image, white_square, np.array(display_corners))
+            #image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], np.array(((0, 0), (100, 0), (100, 100), (0, 100))))
+            print(image.shape)
         # 3. Show the current moves suggestion image on top.
         else:
             pass
