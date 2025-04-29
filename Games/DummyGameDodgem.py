@@ -8,7 +8,7 @@ from .GamesPlaneGame import *
 class DummyGame(GamesPlaneGame):
     def __init__(self, camera_yaml):
 
-        self.name = "Pong Hau K'i"
+        self.name = "Dodgem"
 
         # Set up aruco info 
 
@@ -33,7 +33,7 @@ class DummyGame(GamesPlaneGame):
         )
 
         # Set up where pieces may be.
-        valid_board_pos = [(-2.2, 2.7), (2.2, 2.7), (2.2, -2.2), (-2.2, -2.2), (0, 0)]
+        valid_board_pos = [(-1.8, 1.1), (-0.2, 1.1), (1.5, 1.1), (-1.8, -0.3), (-0.2, -0.3), (1.5, -0.3), (-1.8, -1.7), (-0.2, -1.7), (1.5, -1.7)]
 
         # Create the physical board.
         board_info = PhysicalBoardInfo(pieces_arucos, anchor_arucos, valid_board_pos, 5.08)
