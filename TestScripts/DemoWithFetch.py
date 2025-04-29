@@ -223,7 +223,8 @@ while run:
 
         if most_votes in st.session_state.fetcher.board_cache:
             #print("Got an overlay.")
-            image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
+            #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
+            image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], ((40, 0), (200, 10), (10, 300), (300, 330)))
         # 3. Show the current moves suggestion image on top.
         else:
             pass
