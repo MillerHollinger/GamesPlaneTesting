@@ -8,6 +8,8 @@ import io
 import numpy as np
 import cv2
 import datetime
+import pickle
+import os
 
 class BoardFetcher:
     # The base URL for where Uni is running. 
@@ -27,11 +29,32 @@ class BoardFetcher:
         options.add_argument("--headless")
         self.driver = webdriver.Chrome(options=options)
 
-        self.board_cache = {}
+        self.cache_route = f"{self.CACHE_BASE_ROUTE}/{self.name}_{self.variant}.pkl"
         self.loaded = {}
+        self.board_cache = self.get_cache()
 
     def url_for(self, board_state):
         return f"{self.base_url}/{board_state}/board-overlay"
+    
+    CACHE_BASE_ROUTE = "./App/MovesCache/"
+    # Write my current cache
+    def write_cache(self):
+        with open(self.cache_route, 'wb') as f:
+            pickle.dump(self.board_cache, f)
+            print(f"Dumped {len(self.board_cache)} cached board overlays for {self.name} to {self.cache_route}")
+
+    # Attempt to get my cache object from the MovesCache.
+    # If it doesn't exist, create it.
+    def get_cache(self):
+        if os.path.exists(self.cache_route):
+            with open(self.cache_route, 'rb') as f:
+                items = pickle.load(f)
+                print(f"Successfully loaded {len(items)} cached board overlays for {self.name} from {self.cache_route}")
+                return items
+        else:
+            self.board_cache = {}
+            self.write_cache()
+            return {}
 
     async def fetch_svg(self, board_state):
         # Generate and save to cache.
@@ -83,10 +106,11 @@ class BoardFetcher:
         # Begin trying to load the web picture.
         await self.fetch_svg(board_state)
 
-    # Ends the selenium session.
+    # To be called before a program ends. Closes the selenium session and writes to cache.
     def close(self):
         self.driver.quit()
-        print("Closing")
+        self.write_cache()
+        print("Quit Selenium and wrote cache.")
 
     # Debug function to check what a board state's image looks like.
     def show(self, board_state):
@@ -95,27 +119,3 @@ class BoardFetcher:
             # Get the current date and time
         else:
             print(f"{datetime.datetime.now()} : Tried to show {board_state} which wasn't in cache. {self.board_cache}")
-
-async def main():
-    bf = BoardFetcher("othello", "regular")
-
-    try:
-        asyncio.create_task(bf.get_svg_for("1_-----BW--WB-----"))
-        while True:
-            bf.show("1_-----BW--WB-----")
-
-            await asyncio.sleep(0.001)
-
-            # Wait for the user to press 'Q' to quit
-            key = cv2.waitKey(1)  # 1 millisecond wait
-            
-            if key == ord('q'):  # Check if the key pressed is 'q'
-                print("You pressed 'Q'. Exiting...")
-                break  # Exit the loop
-
-    finally:
-        bf.close()
-        cv2.destroyAllWindows()
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -21,7 +21,7 @@ if "camera" not in ses:
     
     ses.game = fetch_game("Dao", yaml_str)
     ses.fetcher = BoardFetcher("dao", "regular")
-    print("CAMERA & GAME SET UP.")
+    print("Camera and Game loaded successfully.")
 
 # 2. ONLINE WINDOW
 FRAME_WINDOW = st.image([ ])
@@ -250,6 +250,9 @@ while run:
 
 if not run:
     st.warning('Video stopped. Click Activate Camera to start the feed.')
+
+if st.button("Write Cache"):
+    ses.fetcher.write_cache()
 
 # TODO:
 # - Verify the board state makes sense.
