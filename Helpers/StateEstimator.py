@@ -23,6 +23,9 @@ class MajorityEstimator(BoardStateEstimator):
         self.queue.append((timest, board))
         self.cleanup()
 
+    def has_state(self):
+        return bool(self.queue)
+
     def curr_board_state(self):
         self.cleanup()
         if not self.queue:

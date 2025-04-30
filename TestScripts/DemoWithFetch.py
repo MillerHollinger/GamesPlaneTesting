@@ -24,7 +24,14 @@ if "camera" not in ses:
     ses.fetcher = BoardFetcher("dao", "regular")
     print("Camera and Game loaded successfully.")
     ses.turn = "2_"
-    ses.last_board = ""
+    ses.cached_corners = {
+        12: (0, 0),
+        13: (0, 0),
+        14: (0, 0),
+        15: (0, 0)
+    }
+    # STATE ESTIMATION
+    ses.estimator = MajorityEstimator(max_frames=10)
 
 # 2. ONLINE WINDOW
 FRAME_WINDOW = st.image([ ])
@@ -166,9 +173,6 @@ def overlay_image(background, foreground, x, y):
 
     return bg
 
-# STATE ESTIMATION
-estimator = MajorityEstimator(max_frames=10)
-
 # Wrapper to run the async function in a thread
 def make_loop_for(func, state):
     loop = asyncio.new_event_loop()
@@ -193,7 +197,7 @@ while run:
     # - Must find 8 pieces: 4 black, 4 white
     # TODO: Redo to require only one anchor.
 
-    if len(pieces) != 8 or len(anchors) != 4:
+    if len(anchors) == 0:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         FRAME_WINDOW.image(image)
 
@@ -205,48 +209,53 @@ while run:
     # - White turn is 1, Black is 2. Assume 1 for now
     # - TODO: How do we say whose turn it is? Button? 
     
-    board_str = "1_" if not blacks_turn else "2_"
-    turn_display.badge("White" if not blacks_turn else "Black", color="gray")
-    GRID = len(POS_TO_IDX)
-    board_rep = [["-" for c in range(GRID)] for r in range(GRID)]
+    if len(pieces) == 8:
+        board_str = "1_" if not blacks_turn else "2_"
+        turn_display.badge("White" if not blacks_turn else "Black", color="gray")
+        GRID = len(POS_TO_IDX)
+        board_rep = [["-" for c in range(GRID)] for r in range(GRID)]
 
-    for piece in pieces:
-        name = "O" if piece.phys.id == 1 else "X"
-        pos_x, pos_y = piece.closest_board_position
-        idx_x, idx_y = POS_TO_IDX[pos_x][pos_y]
-        board_rep[idx_x][idx_y] = name
+        for piece in pieces:
+            name = "O" if piece.phys.id == 1 else "X"
+            pos_x, pos_y = piece.closest_board_position
+            idx_x, idx_y = POS_TO_IDX[pos_x][pos_y]
+            board_rep[idx_x][idx_y] = name
+        
+        for y in range(GRID):
+            for x in range(GRID):
+                board_str += board_rep[x][y]
+
+        # 3. Add board state to state estimator
+        ses.estimator.seen_board_state(board_str)
     
-    for y in range(GRID):
-        for x in range(GRID):
-            board_str += board_rep[x][y]
+    if ses.estimator.has_state():
+        best_board = ses.estimator.curr_board_state()    
 
-    # 3. Add board state to state estimator
-    estimator.seen_board_state(board_str)
-    best_state = estimator.curr_board_state()    
-    data2.badge(best_state)
+        data2.badge(best_board)
 
-    # This is janky, but it lists the correct way to display the moves image.
-    if best_state in st.session_state.fetcher.board_cache:
-        correct_order = {
-            12: 1,
-            13: 4,
-            14: 2,
-            15: 3
-        }
         corners_to_use = {
             12: "top_r",
             13: "bot_r",
             14: "top_l",
             15: "bot_l"
         }
-        display_corners = [getattr(a, corners_to_use[a.phys.id]) for a in sorted(anchors, key=lambda anch: correct_order[anch.phys.id])]
+        for a in anchors:
+            ses.cached_corners[a.phys.id] = getattr(a, corners_to_use[a.phys.id]) 
 
-        overlay_image = st.session_state.fetcher.board_cache[best_state]
-        image = warp_and_overlay(image, overlay_image, np.array(display_corners))
-    else:
-        # Start a thread to get this image.
-        thread = threading.Thread(target=make_loop_for, args=(ses.fetcher.get_svg_for, best_state))
-        thread.start()
+        # This is janky, but it lists the correct way to display the moves image.
+        if best_board in st.session_state.fetcher.board_cache:
+            correct_order = [
+                12, 14, 15, 13
+            ]
+            
+            display_corners = [ses.cached_corners[n] for n in correct_order]
+
+            overlay_image = st.session_state.fetcher.board_cache[best_board]
+            image = warp_and_overlay(image, overlay_image, np.array(display_corners))
+        else:
+            # Start a thread to get this image.
+            thread = threading.Thread(target=make_loop_for, args=(ses.fetcher.get_svg_for, best_board))
+            thread.start()
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
