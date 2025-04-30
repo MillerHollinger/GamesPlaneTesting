@@ -1,36 +1,37 @@
-# A demo of GamesPlane that fetches board images off the net.
+# A demo of GamesPlane that fetches board images online
+# python -m streamlit run TestScripts/DemoWithFetch.py
 
 import cv2
 import sys
 sys.path.append(".")
-import streamlit as st
-from App.ConvertJSON import fetch_game
-from CameraCalibration.auto_calibration import *
-from App.BoardFetcher import BoardFetcher
 import asyncio
 import numpy as np
+import streamlit as st
+from Games.DummyGameTTT import *
+from App.ConvertJSON import fetch_game
+from App.BoardFetcher import BoardFetcher
+from CameraCalibration.auto_calibration import *
+from Helpers.StateEstimator import MajorityEstimator
 
-# 1. Setup.
-if "camera" not in st.session_state:
-    st.session_state.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    st.session_state.game = fetch_game("Dao")
-    st.session_state.fetcher = BoardFetcher("dao", "regular")
+# 1. CAMERA & GAME
+ses = st.session_state
+if "camera" not in ses:
+    ses.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    yaml_str = get_calib_matrices(cam=ses.camera)
+    
+    ses.game = fetch_game("Dao", yaml_str)
+    ses.fetcher = BoardFetcher("dao", "regular")
+    print("CAMERA & GAME SET UP.")
 
-    print("Camera and game are set up.")
-
-# CAMERA WINDOW
-run = st.checkbox("Activate Camera")
-FRAME_WINDOW = st.image([])
+# 2. ONLINE WINDOW
+FRAME_WINDOW = st.image([ ])
 st.header("Live Feed Debug")
 st.subheader("Live Results")
-datafield = st.text("Waiting for data...")
+run = st.checkbox("Activate Camera")
+data = st.text("Waiting for Camera")
+data2 = st.text("")
 
-async def make_request(board_state):
-    asyncio.create_task(st.session_state.fetcher.get_svg_for("1_-----BW--WB-----"))
-
-    pass
-
-# x, y
+# 3. HARDCODED X,Y
 POS_TO_IDX = {
     2.7 : {
         2.7 : [3, 0],
@@ -58,6 +59,9 @@ POS_TO_IDX = {
     }
 }
 
+# 4. HELPER METHODS
+async def make_request(board_state):
+    asyncio.create_task(st.session_state.fetcher.get_svg_for("1_-----BW--WB-----"))
 
 def warp_and_overlay(background, foreground, dst_points):
     """
@@ -155,75 +159,62 @@ def overlay_image(background, foreground, x, y):
 
     return bg
 
-# PROCESS VIDEO
-# 2. Loop:
+# STATE ESTIMATION
+estimator = MajorityEstimator()
 
-state_votes = {}
-total_votes = 0
-MIN_VOTES_TO_RENDER = 20 # You need this many votes before web requests will be sent out.
-
+# 5. PROCESS VIDEO
 while run:
-    # Get image.
-    _, image = st.session_state.camera.read()
-    # try:
-    # Process image.
-    pieces, anchors, reasoning = st.session_state.game.gframe.process_image(image, True)
-    prefix = f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n"
-    datafield.write(prefix + "  \n".join(["  \n".join([a for a in r]) for r in reasoning]))
+    _, image = ses.camera.read()
 
-    # Show basic aruco info.
+    pieces, anchors, reasons = ses.game.process_image(image)
+    prefix = f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n"
+    data.write(prefix)# + "  \n".join(["  \n".join([a for a in r]) for r in reasons]))
+
     for info in pieces + anchors:
         info.put_summary_graphic(image)
         info.put_bounds(image)
 
-    x = 0
-    # Now, try to show the board state as well.
+    # NOTE: Now try to show the board state.
     # 1. Verify the board state makes sense:
-    # - Must find 8 pieces, 4 black and 4 white.
-    
-    #print(f"Found {len(pieces)} pieces and {len(anchors)} anchors")
+    # - Must find 8 pieces: 4 black, 4 white
+    # TODO: Redo to require only one anchor.
+
     if len(pieces) != 8 or len(anchors) != 4:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         FRAME_WINDOW.image(image)
-        #print("Can't see all 8 pieces and at least one anchor.")
-        continue
-    # ignoring - Must find 4 anchors. (for now)
 
-    # 2. Convert to board state.
-    # - For Dao, X is White and O is Black. Empty spaces are -. White's turn is 1, black's is 2.
-    # - PROBLEM: How do we say whose turn it is? A button? 
-    # For now assume it's white's turn.
-    board_string = "1_"
-    board_rep = [["-" for i in range(4)] for k in range(4)]
+        print(f"Error: {len(pieces)=}, {len(anchors)=} \n Needs: (8 pieces, 4 anchors) in frame")
+        continue    # IGNORE. Has to find 4 anchors
+
+    # 2. Convert board state to board string
+    # - For Dao: X is White, O is Black, - is empty
+    # - White turn is 1, Black is 2. Assume 1 for now
+    # - TODO: How do we say whose turn it is? Button? 
+    
+    board_str = "1_"
+    GRID = len(POS_TO_IDX)
+    board_rep = [["-" for c in range(GRID)] for r in range(GRID)]
+
     for piece in pieces:
         name = "O" if piece.phys.id == 1 else "X"
-        #print(piece.closest_board_position)
-        board_pos = POS_TO_IDX[piece.closest_board_position[0]][piece.closest_board_position[1]]
-        board_rep[board_pos[0]][board_pos[1]] = name
+        pos_x, pos_y = piece.closest_board_position
+        idx_x, idx_y = POS_TO_IDX[pos_x][pos_y]
+        board_rep[idx_x][idx_y] = name
     
-    for y in range(4):
-        for x in range(4):
-            board_string += board_rep[x][y]
+    for r in range(GRID):
+        for c in range(GRID):
+            board_str += board_rep[c][r]
 
-    # Add the vote to the current board state estimate.
-    if board_string in state_votes:
-        state_votes[board_string] += 1
-    else:
-        state_votes[board_string] = 1
-    total_votes += 1
+    # 3. Add board state to state estimator
+    estimator.seen_board_state(board_str)
+    MIN_FRAMES = 20
 
-    # Wipe votes every 150 for up-to-date info.
-    if total_votes >= 150:
-        #print("Resetting votes.")
-        total_votes = 0
-        state_votes = {}
-    
-    if total_votes >= MIN_VOTES_TO_RENDER:
-        most_votes = max(state_votes, key=state_votes.get)
-        print(most_votes)
-        # 2. Send off a web request.
-        #print("Going to try to fetch a png.")
-        asyncio.run(st.session_state.fetcher.get_svg_for(most_votes))
+    # if len(estimator.queue) > MIN_FRAMES:
+    best_state = estimator.curr_board_state()
+    data2.write("Estimated board state: " + best_state)
+
+    print("Fetching web image...")
+    asyncio.run(ses.fetcher.get_svg_for(best_state))
 
         correct_order = {
             12: 1,
@@ -249,22 +240,15 @@ while run:
             pass
             #print("Not ready to show an image yet.")
 
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        FRAME_WINDOW.image(image)
-
-        
-    # except Exception as e:
-    #     print(e)
-
-    
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    FRAME_WINDOW.image(image)
 
 if not run:
     st.warning('Video stopped. Click Activate Camera to start the feed.')
 
-
+# TODO:
 # - Verify the board state makes sense.
-# - Send off a web request for this board state.
+# - Send off a web request for states.
 # - Render summary graphic and bounds.
-# - For now: Just render the moves suggestion in a separate window.
-
+# - For now just render the moves suggestion in a separate window.
 # - Render the cached moves suggestion image on top of the board.

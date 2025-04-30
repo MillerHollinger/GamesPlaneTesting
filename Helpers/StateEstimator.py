@@ -1,105 +1,90 @@
-"""
-Implement a state estimator with an algorithm that settles on the most stable board
-
-Gotta make our state machine resistant to outlier frames that misdetect "movement"
-
-Any idea how we should do that algorithm? Like it has to stay the same for 1 second
-
-Yeah I was thinking for a certain latency (x seconds, x frames, whatever) we take the majority vote of the detections
-Or option 2 is after x frames of detecting a different board state it says okay that's probably the new detected state
-
-The main issue is sometimes it flip flops a bunch between possible states especially if the camera is at a weird angle
-I guess there's not too much we can do about that though. Maybe we should have the decision maker be a separate class:
-
-BoardStateEstimator
-    Has a function to indicate a board state as seen in a single picture and the time at which it was detected
-    Has a function to get its best guess of what the real board state currently is
-
-Then we can switch those estimators out and try different approaches
-Maybe an estimator that combines several other estimator's guesses
-"""
-
 import time
 from collections import deque, Counter
 
+# Interface for Estimators
 class BoardStateEstimator:
-    def seen_board_state(self, board, timestamp=None):
+    
+    def seen_board_state(self, board: str, timest=None) -> None:
         return
-    def curr_board_state(self, now_timestamp=None):
+    def curr_board_state(self) -> str:
         return
-
 
 ## Sliding window (majority vote) Estimator
 class MajorityEstimator(BoardStateEstimator):
 
-    def __init__(self, window_seconds=1.0):
-        self.window_seconds = window_seconds
-        self.history = deque()   # Each entry: (timestamp, board)
+    def __init__(self, max_frames=99, max_seconds=None):
+        self.max_frames  = max_frames
+        self.max_seconds = max_seconds
+        self.queue = deque()  # Entries = (timestamp, board_str)
 
-    def seen_board_state(self, board, timestamp=None):
-        timestamp = timestamp if timestamp is not None else time.time()
-        self.history.append((timestamp, board))
+    def seen_board_state(self, board, timest=None):
+        if timest is None:
+            timest = time.time()
+        self.queue.append((timest, board))
+        self.cleanup()
 
-    def curr_board_state(self, now_timestamp=None):
-        now_timestamp = now_timestamp if now_timestamp is not None else time.time()
-        # Discard old frames
-        min_allowed = now_timestamp - self.window_seconds
-        while self.history and self.history[0][0] < min_allowed:
-            self.history.popleft()
-        if not self.history:
-            return None   # Not enough data
+    def curr_board_state(self):
+        self.cleanup()
+        if not self.queue:
+            raise Exception("No valid board states in my queue")
 
-        boards = [b for _,b in self.history]
-        most_common, count = Counter(boards).most_common(1)[0]
-        return most_common
+        boards = [b for t, b in self.queue]
+        winner, c = Counter(boards).most_common(1)[0]
+        return winner
 
+    def cleanup(self):
+        if self.max_frames is not None:
+            while len(self.queue) > self.max_frames:
+                self.queue.popleft()
 
-## Sticky (x agreeing frames changes state)
-class StickyEstimator(BoardStateEstimator):
+        if self.max_seconds is not None:
+            min = time.time() - self.max_seconds
+            while self.queue and self.queue[0][0] < min:
+                self.queue.popleft()
 
-    def __init__(self, min_consecutive_frames=5):
-        self.min_consecutive_frames = min_consecutive_frames
-        self.current_state = None
-        self.candidate_state = None
-        self.candidate_count = 0
+## Agreeing (x agreeing frames changes state)
+class AgreeingEstimator(BoardStateEstimator):
 
-    def seen_board_state(self, board, timestamp=None):
-        # We don't need timestamp in this approach, but it could be tracked if needed
-        if self.current_state is None:
-            self.current_state = board
-            self.candidate_state = None
-            self.candidate_count = 0
-        elif board == self.current_state:
-            # Consistent with current
-            self.candidate_state = None
-            self.candidate_count = 0
-        else:
-            # Candidate for new state
-            if board == self.candidate_state:
-                self.candidate_count += 1
-                if self.candidate_count >= self.min_consecutive_frames:
-                    self.current_state = self.candidate_state
-                    self.candidate_state = None
-                    self.candidate_count = 0
+    def __init__(self, min_frames=9):
+        self.min_frames = min_frames
+        self.curr_state = None
+        self.cleanup()
+
+    def seen_board_state(self, board, timest=None):
+        # Initialize
+        if self.curr_state is None:
+            self.curr_state = board
+        # Same state
+        if self.curr_state == board:
+            self.cleanup()
+        else: # New state
+            if self.new_state == board:
+                self.new_count += 1
+                if self.new_count >= self.min_frames:
+                    self.curr_state = self.new_state
+                    self.cleanup()
             else:
-                self.candidate_state = board
-                self.candidate_count = 1
+                self.new_state = board
+                self.new_count = 1
 
-    def curr_board_state(self, now_timestamp=None):
-        return self.current_state
-
+    def curr_board_state(self):
+        return self.curr_state
+    
+    def cleanup(self):
+        self.new_state = None
+        self.new_count = 0
 
 # Combination (ensemble of multiple) Estimator
 class CombinationEstimator(BoardStateEstimator):
 
-    def __init__(self, estimators):
+    def __init__(self, estimators: list[BoardStateEstimator]):
         self.estimators = estimators
 
-    def seen_board_state(self, board, timestamp=None):
+    def seen_board_state(self, board, timest=None):
         for e in self.estimators:
-            e.seen_board_state(board, timestamp)
+            e.seen_board_state(board, timest)
 
-    def get_current_board_state(self, now_timestamp=None):
-        states = [e.get_current_board_state(now_timestamp) for e in self.estimators]
-        most_common, count = Counter(states).most_common(1)[0]
-        return most_common
+    def curr_board_state(self):
+        states = [e.curr_board_state() for e in self.estimators]
+        winner, c = Counter(states).most_common(1)[0]
+        return winner

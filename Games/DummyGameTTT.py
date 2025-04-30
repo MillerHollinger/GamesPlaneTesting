@@ -6,25 +6,33 @@ from Helpers.PhysicalBoardInfo import *
 from Helpers.PhysicalAruco import *
 from .GamesPlaneGame import *
 
-SIZE = 4.88 # cm
-GRID = 3    # 3x3
+SPACE_SIZE = 4.88   # cm
+PIECE_SIZE = 1.66   # cm
+GRID = 3            # 3x3
 
 class DummyGame(GamesPlaneGame):
     def __init__(self, camera_yaml):
         self.name = "TicTacToe"
 
         # Define the arucos for this GamesPlane.
-        piece_arucos = PhysicalAruco.generate_many(
-            [6, 8], 
-            "white", 
-            1.66,
+        X_arucos = PhysicalAruco.generate_many(
+            [8, 9], 
+            "X", 
+            PIECE_SIZE,
+            False,
+            [None, None]
+        )
+        O_arucos = PhysicalAruco.generate_many(
+            [10, 11], 
+            "O", 
+            PIECE_SIZE,
             False,
             [None, None]
         )
         anchor_arucos = PhysicalAruco.generate_many(
             [12, 13, 14, 15], 
             "anchor", 
-            SIZE,
+            SPACE_SIZE,
             True,
             [(-1, 2), (-1, 0), (3, 2), (3, 0)]
         )
@@ -33,14 +41,15 @@ class DummyGame(GamesPlaneGame):
         valid_board_pos = [(x, y) for y in range(GRID) for x in range(GRID)]
 
         # Create the physical board.
-        board_info = PhysicalBoardInfo(piece_arucos, anchor_arucos, valid_board_pos, SIZE)
+        board_info = PhysicalBoardInfo(X_arucos + O_arucos, 
+                        anchor_arucos, valid_board_pos, SPACE_SIZE)
 
         # Set up the GamesFrame for the board.
         self.gframe = GamesFrame(camera_yaml, board_info)
 
     # Shortcut to pass an image to the gframe.
-    def process_image(self, image):
-        return self.gframe.process_image(image)
+    def process_image(self, image, reason=True):
+        return self.gframe.process_image(image, reason)
     
     # DEBUG Helper for now. Returns a text-based representation of the board.
     def to_board(self, pieces: list[DigitalAruco]):

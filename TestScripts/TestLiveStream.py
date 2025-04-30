@@ -1,11 +1,14 @@
-# python -m streamlit run TestScripts/LiveTestDebug.py
+# python -m streamlit run TestScripts/TestLiveStream.py
 
 import cv2
 import sys
 sys.path.append(".")
+import asyncio
+import numpy as np
 import streamlit as st
 from Games.DummyGamePHK import DummyGame
 from CameraCalibration.auto_calibration import *
+from Helpers.StateEstimator import MajorityEstimator
 
 # CAMERA & GAME
 if "camera" not in st.session_state:
@@ -17,29 +20,54 @@ if "camera" not in st.session_state:
     # yaml string done
     st.session_state.game = DummyGame(yaml_str)
 
-# CAMERA WINDOW
-run = st.checkbox("Activate Camera")
-FRAME_WINDOW = st.image([])
+# ONLINE WINDOW
+FRAME_WINDOW = st.image([ ])
 st.header("Live Feed Debug")
 st.subheader("Live Results")
-datafield = st.text("Waiting for data...")
+run = st.checkbox("Activate Camera")
+data = st.text("Waiting for Camera")
+data2 = st.text("")
+
+# STATE ESTIMATION
+estimator = MajorityEstimator()
 
 # PROCESS VIDEO
 while run:
-    _, image = st.session_state.camera.read()
-    try:
-        pieces, anchors, reasoning = st.session_state.game.gframe.process_image(image, True)
-        prefix = f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n"
-        datafield.write(prefix + "  \n".join(["  \n".join([a for a in r]) for r in reasoning]))
+    _, image = ses.camera.read()
 
-        for info in pieces + anchors:
-            info.put_summary_graphic(image)
-            info.put_bounds(image)
-    except Exception as e:
-        print(f"No viable arucos in frame. {e}")
+    pieces, anchors, reasons = ses.game.process_image(image)
+    prefix = f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n"
+    data.write(prefix)# + "  \n".join(["  \n".join([a for a in r]) for r in reasons]))
+
+    for info in pieces + anchors:
+        info.put_summary_graphic(image)
+        info.put_bounds(image)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
 
+    if not anchors or not pieces:
+        continue
+
+    # Convert to board string. Assume X's/1's turn
+    board_str = "1_"
+    board_rep = [["-" for c in range(GRID)] for r in range(GRID)]
+    
+    for piece in pieces:
+        name = piece.phys.tag
+        x, y = piece.closest_board_position
+        board_rep[x][y] = name
+    
+    for r in range(GRID):
+        for c in range(GRID):
+            board_str += board_rep[c][r]
+
+    # Add board string to state estimator
+    estimator.seen_board_state(board_str)
+    
+    # if len(estimator.queue) > MIN_FRAMES:
+    pred_state = estimator.curr_board_state()
+    data2.write("Estimated board state: " + pred_state)
+
 if not run:
-    st.warning('Video stopped. Click Activate Camera to start the feed.')
+    st.warning("Video stopped - activate camera.")

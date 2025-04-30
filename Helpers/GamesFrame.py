@@ -59,6 +59,6 @@ class GamesFrame:
                 reasoning.append(reason)
 
         if not give_reasoning:
-            return pieces, anchors
+            return pieces, anchors, None
         else:
             return pieces, anchors, reasoning
