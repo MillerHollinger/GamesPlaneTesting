@@ -17,6 +17,7 @@ class BoardFetcher:
     UNI_URL = "http://localhost:3000/uni"
     LOAD_DELAY = 3 # How long it's expected to take to load a board overlay.
     LOADING_IMAGE = "ExtraFiles/GamesPlane Logo/Loading Logo.png"
+    FAILED_IMAGE = "ExtraFiles/GamesPlane Logo/Invalid Logo.png"
 
     def __init__(self, name, variant):
         self.name = name
@@ -64,7 +65,7 @@ class BoardFetcher:
 
         # Let the page load and JS run.
         # TODO We should try to lower this as much as possible.
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1.5)
 
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
@@ -93,6 +94,7 @@ class BoardFetcher:
             self.loaded[board_state] = True
         except:
             print(f"Invalid board state {board_state} was queried.")
+            self.board_cache[board_state] = cv2.imread(self.FAILED_IMAGE, cv2.IMREAD_UNCHANGED) 
             self.loaded[board_state] = True
 
     async def get_svg_for(self, board_state):

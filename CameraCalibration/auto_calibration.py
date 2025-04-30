@@ -10,7 +10,6 @@ def get_calib_matrices(w=None, h=None, cam=None):
     """
     if cam is not None:
         _, image = cam.read()
-        time.sleep(1)
         while image is None:
             print("Trying to access given camera...")
             _, image = cam.read()

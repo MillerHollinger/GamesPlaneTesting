@@ -7,6 +7,7 @@ sys.path.append(".")
 import asyncio
 import numpy as np
 import streamlit as st
+import threading
 from Games.DummyGameTTT import *
 from App.ConvertJSON import fetch_game
 from App.BoardFetcher import BoardFetcher
@@ -25,11 +26,16 @@ if "camera" not in ses:
 
 # 2. ONLINE WINDOW
 FRAME_WINDOW = st.image([ ])
-st.header("Live Feed Debug")
-st.subheader("Live Results")
-run = st.checkbox("Activate Camera")
-data = st.text("Waiting for Camera")
-data2 = st.text("")
+st.header("Dao GamesPlane")
+run = st.toggle("Activate Camera")
+
+# Display for the number of anchors and pieces spotted.
+col_anc, col_piece = st.columns(2)
+anc_display = col_anc.empty()
+piece_display = col_piece.empty()
+anc_display.badge(f"0 anchors", color="red")
+piece_display.badge(f"0 pieces", color="blue")
+data2 = st.empty()
 
 # 3. HARDCODED X,Y
 POS_TO_IDX = {
@@ -159,13 +165,20 @@ def overlay_image(background, foreground, x, y):
 # STATE ESTIMATION
 estimator = MajorityEstimator()
 
+# Wrapper to run the async function in a thread
+def make_loop_for(func, state):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(func(state))
+    loop.close()
+
 # 5. PROCESS VIDEO
 while run:
     _, image = ses.camera.read()
 
     pieces, anchors, reasons = ses.game.process_image(image)
-    prefix = f"{len(anchors)} anchors spotted; {len(pieces)} pieces spotted  \n"
-    data.write(prefix)# + "  \n".join(["  \n".join([a for a in r]) for r in reasons]))
+    anc_display.badge(f"{len(anchors)} anchors", color="red")
+    piece_display.badge(f"{len(pieces)} pieces", color="blue")
 
     for info in pieces + anchors:
         #info.put_summary_graphic(image)
@@ -204,59 +217,35 @@ while run:
 
     # 3. Add board state to state estimator
     estimator.seen_board_state(board_str)
-    MIN_FRAMES = 20
-
     best_state = estimator.curr_board_state()
-    data2.write("Estimated board state: " + best_state)
-
-    asyncio.run(ses.fetcher.get_svg_for(best_state))
+    data2.badge(best_state)
 
     # This is janky, but it lists the correct way to display the moves image.
     # The first number is where it should go in the order. The second thing is the pixel coor
-    correct_order = {
-        12: 1,
-        13: 4,
-        14: 2,
-        15: 3
-    }
-    corners_to_use = {
-        12: "top_r",
-        13: "bot_r",
-        14: "top_l",
-        15: "bot_l"
-    }
-    display_corners = [getattr(a, corners_to_use[a.phys.id]) for a in sorted(anchors, key=lambda anch: correct_order[anch.phys.id])]
-    
-    
     if best_state in st.session_state.fetcher.board_cache:
-        #print("Got an overlay.")
-        #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
-        #overlay_image = np.full((100, 100, 4), 255, dtype=np.uint8)
-        overlay_image = st.session_state.fetcher.board_cache[best_state]
+        correct_order = {
+            12: 1,
+            13: 4,
+            14: 2,
+            15: 3
+        }
+        corners_to_use = {
+            12: "top_r",
+            13: "bot_r",
+            14: "top_l",
+            15: "bot_l"
+        }
+        display_corners = [getattr(a, corners_to_use[a.phys.id]) for a in sorted(anchors, key=lambda anch: correct_order[anch.phys.id])]
 
-        # TODO Get correct positions to display over.
-        
-        #image = overlay_image
+        overlay_image = st.session_state.fetcher.board_cache[best_state]
         image = warp_and_overlay(image, overlay_image, np.array(display_corners))
-        #image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], np.array(((0, 0), (100, 0), (100, 100), (0, 100))))
-        #print(image.shape)
-    # 3. Show the current moves suggestion image on top.
     else:
-        pass
-        #print("Not ready to show an image yet.")
+        # Start a thread to get this image.
+        thread = threading.Thread(target=make_loop_for, args=(ses.fetcher.get_svg_for, best_state))
+        thread.start()
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
 
-if not run:
-    st.warning('Video stopped. Click Activate Camera to start the feed.')
-
 if st.button("Write Cache"):
     ses.fetcher.write_cache()
-
-# TODO:
-# - Verify the board state makes sense.
-# - Send off a web request for states.
-# - Render summary graphic and bounds.
-# - For now just render the moves suggestion in a separate window.
-# - Render the cached moves suggestion image on top of the board.
