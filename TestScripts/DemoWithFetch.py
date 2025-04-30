@@ -23,6 +23,8 @@ if "camera" not in ses:
     ses.game = fetch_game("Dao", yaml_str)
     ses.fetcher = BoardFetcher("dao", "regular")
     print("Camera and Game loaded successfully.")
+    ses.turn = "2_"
+    ses.last_board = ""
 
 # 2. ONLINE WINDOW
 FRAME_WINDOW = st.image([ ])
@@ -36,6 +38,8 @@ piece_display = col_piece.empty()
 anc_display.badge(f"0 anchors", color="red")
 piece_display.badge(f"0 pieces", color="blue")
 data2 = st.empty()
+blacks_turn = st.toggle("Player Turn")
+turn_display = st.empty()
 
 # 3. HARDCODED X,Y
 POS_TO_IDX = {
@@ -163,7 +167,7 @@ def overlay_image(background, foreground, x, y):
     return bg
 
 # STATE ESTIMATION
-estimator = MajorityEstimator()
+estimator = MajorityEstimator(max_frames=10)
 
 # Wrapper to run the async function in a thread
 def make_loop_for(func, state):
@@ -201,7 +205,8 @@ while run:
     # - White turn is 1, Black is 2. Assume 1 for now
     # - TODO: How do we say whose turn it is? Button? 
     
-    board_str = "1_"
+    board_str = "1_" if not blacks_turn else "2_"
+    turn_display.badge("White" if not blacks_turn else "Black", color="gray")
     GRID = len(POS_TO_IDX)
     board_rep = [["-" for c in range(GRID)] for r in range(GRID)]
 
@@ -217,11 +222,10 @@ while run:
 
     # 3. Add board state to state estimator
     estimator.seen_board_state(board_str)
-    best_state = estimator.curr_board_state()
+    best_state = estimator.curr_board_state()    
     data2.badge(best_state)
 
     # This is janky, but it lists the correct way to display the moves image.
-    # The first number is where it should go in the order. The second thing is the pixel coor
     if best_state in st.session_state.fetcher.board_cache:
         correct_order = {
             12: 1,

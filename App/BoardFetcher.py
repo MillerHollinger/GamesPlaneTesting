@@ -65,7 +65,7 @@ class BoardFetcher:
 
         # Let the page load and JS run.
         # TODO We should try to lower this as much as possible.
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2)
 
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
