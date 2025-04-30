@@ -63,28 +63,22 @@ class BoardFetcher:
 
             # Assume 'encoded' is your full base64-encoded PNG
             image_data = base64.b64decode(encoded)
-            print("image data")
-            with open("TestScripts/TEMP_Overlays/debug-pic.png", "wb") as f:
-                f.write(image_data)
             #print(image_data)
 
             # Full image data!
             image_np = np.frombuffer(image_data, dtype=np.uint8)
-            print("image np")
-            print(image_np)
             
-
             # Decode full PNG
             image_cv = cv2.imdecode(image_np, cv2.IMREAD_UNCHANGED)
-            #print(image_cv)
-
+            
+            
             # Safety check
             if image_cv is None:
                 raise ValueError("Failed to decode image.")
             #print("Resizing...")
             # Now safe to resize
-            image_cv = cv2.resize(image_cv, (200, 200), interpolation=cv2.INTER_AREA)
-            #print(image_cv)
+            image_cv = cv2.resize(image_cv, (300, 300), interpolation=cv2.INTER_AREA)
+            #cv2.imwrite("TestScripts/TEMP_Overlays/resized.png", image_cv)
 
             self.board_cache[board_state] = image_cv
             cv2.imwrite(f'TestScripts\TEMP_Overlays\{board_state}.png', image_cv)

@@ -112,8 +112,9 @@ class DigitalAruco:
             pos_estimates_x.append(this_pos_estimate[0])
             pos_estimates_y.append(this_pos_estimate[1])
 
-            # TODO Come up with a more intentionally chosen conversion from distance to weight.
-            weights.append(1.0 / np.linalg.norm(rebased_tvec))
+            # Distance to weight. Closer anchors count for more.
+            weights.append(2 ** (-1 * np.linalg.norm(rebased_tvec)))
+            #print(weights[-1])
 
             reasoning.append(f"Locating Piece {self.phys.id}: Anchor {marker_data.phys.id} estimates at {round(this_pos_estimate[0], 2), round(this_pos_estimate[1], 2)}")
 

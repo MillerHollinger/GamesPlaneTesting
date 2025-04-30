@@ -233,16 +233,17 @@ while run:
         }
         
         if most_votes in st.session_state.fetcher.board_cache:
-            print("Got an overlay.")
+            #print("Got an overlay.")
             #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
-            white_square = np.full((100, 100, 4), 255, dtype=np.uint8)
-
+            #overlay_image = np.full((100, 100, 4), 255, dtype=np.uint8)
+            overlay_image = st.session_state.fetcher.board_cache[most_votes]
+ 
             # TODO Get correct positions to display over.
             display_corners = [a.center for a in sorted(anchors, key=lambda a: correct_order[a.phys.id])]
-
-            image = warp_and_overlay(image, white_square, np.array(display_corners))
+            #image = overlay_image
+            image = warp_and_overlay(image, overlay_image, np.array(display_corners))
             #image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], np.array(((0, 0), (100, 0), (100, 100), (0, 100))))
-            print(image.shape)
+            #print(image.shape)
         # 3. Show the current moves suggestion image on top.
         else:
             pass

@@ -16,11 +16,11 @@ class DummyGame(GamesPlaneGame):
         
         
         pieces_arucos = PhysicalAruco.generate_many(
-            [6, 7, 8, 9, 10], 
+            [8, 9, 10, 11], 
             "white", 
-            1.66,
+            1.23,
             False,
-            [None for i in range(5)]
+            [None for i in range(4)]
         )
         
 

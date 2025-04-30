@@ -4,12 +4,12 @@ import cv2
 import sys
 sys.path.append(".")
 import streamlit as st
-from Games.DummyGameTTT import *
+from Games.DummyGamePHK import DummyGame
 from CameraCalibration.auto_calibration import *
 
 # CAMERA & GAME
 if "camera" not in st.session_state:
-    st.session_state.camera = cv2.VideoCapture(0)
+    st.session_state.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     # auto calibration
     _, image = st.session_state.camera.read()
     h, w = image.shape[:2]
@@ -35,8 +35,8 @@ while run:
         for info in pieces + anchors:
             info.put_summary_graphic(image)
             info.put_bounds(image)
-    except Exception:
-        print("No viable arucos in frame.")
+    except Exception as e:
+        print(f"No viable arucos in frame. {e}")
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
