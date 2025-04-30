@@ -36,62 +36,41 @@ class BoardFetcher:
     async def fetch_svg(self, board_state):
         # Generate and save to cache.
         url = self.url_for(board_state)
-        print(url)
+        print(f"Fetching a board overlay from {url}")
         self.driver.get(url)
 
         # Let the page load and JS run.
-        print("About to start sleep")
-        await asyncio.sleep(3)
-        print("Sleep Over")
+        # TODO We should try to lower this as much as possible.
+        await asyncio.sleep(0.5)
 
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")
-        #print(soup.contents)
-
-        print("After")
-
-        #print(f"Got back {soup.contents}")
 
         # Extract element by ID
         try:
             data_url = soup.find("img", id="board-overlay")["src"]
+
             # Remove prefix info
-            header, encoded = data_url.split(',', 1)
-            print(header)
-
-            print("About to write")
-
-            # Assume 'encoded' is your full base64-encoded PNG
+            _, encoded = data_url.split(',', 1)
             image_data = base64.b64decode(encoded)
-            #print(image_data)
 
-            # Full image data!
+            # Decode the image
             image_np = np.frombuffer(image_data, dtype=np.uint8)
             
-            # Decode full PNG
             image_cv = cv2.imdecode(image_np, cv2.IMREAD_UNCHANGED)
             
-            
-            # Safety check
+            # Check we successfully decoded the image
             if image_cv is None:
                 raise ValueError("Failed to decode image.")
-            #print("Resizing...")
-            # Now safe to resize
-            image_cv = cv2.resize(image_cv, (300, 300), interpolation=cv2.INTER_AREA)
-            #cv2.imwrite("TestScripts/TEMP_Overlays/resized.png", image_cv)
+            
+            # Resize to 512x512
+            image_cv = cv2.resize(image_cv, (512, 512), interpolation=cv2.INTER_AREA)
 
             self.board_cache[board_state] = image_cv
-            cv2.imwrite(f'TestScripts\TEMP_Overlays\{board_state}.png', image_cv)
             self.loaded[board_state] = True
-
-            print("Wrote a board state from the web.")
         except:
             print(f"Invalid board state {board_state} was queried.")
             self.loaded[board_state] = True
-
-        #cv2.imshow(f"{self.name} : {board_state}", self.board_cache[board_state])
-
-        print("Done.")
 
     async def get_svg_for(self, board_state):
         # Check the cache.
@@ -102,9 +81,7 @@ class BoardFetcher:
         self.loaded[board_state] = False
 
         # Begin trying to load the web picture.
-        print("About to create")
         await self.fetch_svg(board_state)
-        print("After await statement")
 
     # Ends the selenium session.
     def close(self):

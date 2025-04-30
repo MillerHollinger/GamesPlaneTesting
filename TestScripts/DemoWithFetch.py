@@ -60,9 +60,6 @@ POS_TO_IDX = {
 }
 
 # 4. HELPER METHODS
-async def make_request(board_state):
-    asyncio.create_task(st.session_state.fetcher.get_svg_for("1_-----BW--WB-----"))
-
 def warp_and_overlay(background, foreground, dst_points):
     """
     Warps the foreground image to the given four destination points
@@ -171,7 +168,7 @@ while run:
     data.write(prefix)# + "  \n".join(["  \n".join([a for a in r]) for r in reasons]))
 
     for info in pieces + anchors:
-        info.put_summary_graphic(image)
+        #info.put_summary_graphic(image)
         info.put_bounds(image)
 
     # NOTE: Now try to show the board state.
@@ -183,7 +180,7 @@ while run:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         FRAME_WINDOW.image(image)
 
-        print(f"Error: {len(pieces)=}, {len(anchors)=} \n Needs: (8 pieces, 4 anchors) in frame")
+        #print(f"Error: {len(pieces)=}, {len(anchors)=} \n Needs: (8 pieces, 4 anchors) in frame")
         continue    # IGNORE. Has to find 4 anchors
 
     # 2. Convert board state to board string
@@ -201,44 +198,52 @@ while run:
         idx_x, idx_y = POS_TO_IDX[pos_x][pos_y]
         board_rep[idx_x][idx_y] = name
     
-    for r in range(GRID):
-        for c in range(GRID):
-            board_str += board_rep[c][r]
+    for y in range(GRID):
+        for x in range(GRID):
+            board_str += board_rep[x][y]
 
     # 3. Add board state to state estimator
     estimator.seen_board_state(board_str)
     MIN_FRAMES = 20
 
-    # if len(estimator.queue) > MIN_FRAMES:
     best_state = estimator.curr_board_state()
     data2.write("Estimated board state: " + best_state)
 
-    print("Fetching web image...")
     asyncio.run(ses.fetcher.get_svg_for(best_state))
 
-        correct_order = {
-            12: 1,
-            13: 4,
-            14: 2,
-            15: 3
-        }
+    # This is janky, but it lists the correct way to display the moves image.
+    # The first number is where it should go in the order. The second thing is the pixel coor
+    correct_order = {
+        12: 1,
+        13: 4,
+        14: 2,
+        15: 3
+    }
+    corners_to_use = {
+        12: "top_r",
+        13: "bot_r",
+        14: "top_l",
+        15: "bot_l"
+    }
+    display_corners = [getattr(a, corners_to_use[a.phys.id]) for a in sorted(anchors, key=lambda anch: correct_order[anch.phys.id])]
+    
+    
+    if best_state in st.session_state.fetcher.board_cache:
+        #print("Got an overlay.")
+        #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
+        #overlay_image = np.full((100, 100, 4), 255, dtype=np.uint8)
+        overlay_image = st.session_state.fetcher.board_cache[best_state]
+
+        # TODO Get correct positions to display over.
         
-        if most_votes in st.session_state.fetcher.board_cache:
-            #print("Got an overlay.")
-            #image = overlay_image(image, st.session_state.fetcher.board_cache[most_votes], 0, 0)
-            #overlay_image = np.full((100, 100, 4), 255, dtype=np.uint8)
-            overlay_image = st.session_state.fetcher.board_cache[most_votes]
- 
-            # TODO Get correct positions to display over.
-            display_corners = [a.center for a in sorted(anchors, key=lambda a: correct_order[a.phys.id])]
-            #image = overlay_image
-            image = warp_and_overlay(image, overlay_image, np.array(display_corners))
-            #image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], np.array(((0, 0), (100, 0), (100, 100), (0, 100))))
-            #print(image.shape)
-        # 3. Show the current moves suggestion image on top.
-        else:
-            pass
-            #print("Not ready to show an image yet.")
+        #image = overlay_image
+        image = warp_and_overlay(image, overlay_image, np.array(display_corners))
+        #image = warp_and_overlay(image, st.session_state.fetcher.board_cache[most_votes], np.array(((0, 0), (100, 0), (100, 100), (0, 100))))
+        #print(image.shape)
+    # 3. Show the current moves suggestion image on top.
+    else:
+        pass
+        #print("Not ready to show an image yet.")
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)

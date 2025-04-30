@@ -10,15 +10,17 @@ from Games.DummyGamePHK import DummyGame
 from CameraCalibration.auto_calibration import *
 from Helpers.StateEstimator import MajorityEstimator
 
+ses = st.session_state
+
 # CAMERA & GAME
-if "camera" not in st.session_state:
-    st.session_state.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+if "camera" not in ses:
+    ses.camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     # auto calibration
-    _, image = st.session_state.camera.read()
+    _, image = ses.camera.read()
     h, w = image.shape[:2]
     yaml_str = get_calib_matrices(w, h, mode="yaml")
     # yaml string done
-    st.session_state.game = DummyGame(yaml_str)
+    ses.game = DummyGame(yaml_str)
 
 # ONLINE WINDOW
 FRAME_WINDOW = st.image([ ])
@@ -30,6 +32,7 @@ data2 = st.text("")
 
 # STATE ESTIMATION
 estimator = MajorityEstimator()
+GRID = 4
 
 # PROCESS VIDEO
 while run:
