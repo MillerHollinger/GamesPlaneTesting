@@ -8,6 +8,7 @@ import asyncio
 import numpy as np
 import streamlit as st
 import threading
+import keyboard
 from Games.DummyGameTTT import *
 from App.ConvertJSON import fetch_game
 from App.BoardFetcher import BoardFetcher
@@ -180,6 +181,11 @@ def make_loop_for(func, state):
     loop.run_until_complete(func(state))
     loop.close()
 
+def on_space():
+    blacks_turn = not blacks_turn
+
+keyboard.add_hotkey('space', on_space)
+
 # 5. PROCESS VIDEO
 while run:
     _, image = ses.camera.read()
@@ -262,3 +268,6 @@ while run:
 
 if st.button("Write Cache"):
     ses.fetcher.write_cache()
+
+if st.button("Erase Cache"):
+    ses.fetcher.erase_cache()

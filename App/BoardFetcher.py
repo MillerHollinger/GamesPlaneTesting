@@ -56,6 +56,10 @@ class BoardFetcher:
             self.board_cache = {}
             self.write_cache()
             return {}
+        
+    # Erase the cache if there's incorrect data in it.
+    def erase_cache(self):
+        self.board_cache = {}
 
     async def fetch_svg(self, board_state):
         # Generate and save to cache.
@@ -65,7 +69,7 @@ class BoardFetcher:
 
         # Let the page load and JS run.
         # TODO We should try to lower this as much as possible.
-        await asyncio.sleep(2)
+        await asyncio.sleep(2.5)
 
         html = self.driver.page_source
         soup = BeautifulSoup(html, "html.parser")

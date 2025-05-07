@@ -21,7 +21,7 @@ class GamesFrame:
             self.cam_matrix = np.array(yaml_data['camera_matrix'])
             self.dist_coeff = np.array(yaml_data['dist_coeff'])
         except:
-            print(f"GamesPlaneConfig failed to read from {camera_yaml}")
+            print(f"GamesFrame failed to read from {camera_yaml}")
             exit()
         
         # Record the board info.
