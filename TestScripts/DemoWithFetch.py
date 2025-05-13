@@ -291,7 +291,7 @@ while run:
             thread.start()
 
     # Show whose turn it is on the image.
-    image = put_text_top_left(image, "Black" if blacks_turn else "White", color=(0, 0, 0) if blacks_turn else (255,255,255), border_color=(0, 0, 0) if not blacks_turn else (255,255,255)) # TODO TEST
+    #image = put_text_top_left(image, "Black" if blacks_turn else "White", color=(0, 0, 0) if blacks_turn else (255,255,255), border_color=(0, 0, 0) if not blacks_turn else (255,255,255)) # TODO TEST
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
 
