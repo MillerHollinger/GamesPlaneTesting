@@ -181,10 +181,38 @@ def make_loop_for(func, state):
     loop.run_until_complete(func(state))
     loop.close()
 
-def on_space():
-    blacks_turn = not blacks_turn
+def put_text_top_left(image, text, font_scale=1.0, 
+                      text_color=(255, 255, 255), 
+                      border_color=(0, 0, 0),
+                      thickness=2, border_thickness=3, 
+                      margin=10):
+    """
+    Draws text with a border in the top-left corner of the image.
 
-keyboard.add_hotkey('space', on_space)
+    Parameters:
+        image (numpy.ndarray): The OpenCV image.
+        text (str): The text to draw.
+        font_scale (float): Font size scale.
+        text_color (tuple): Text color in BGR.
+        border_color (tuple): Outline (border) color in BGR.
+        thickness (int): Thickness of the inner text.
+        border_thickness (int): Thickness of the border (should be greater than `thickness`).
+        margin (int): Margin from the top and left edges.
+
+    Returns:
+        numpy.ndarray: Image with outlined text.
+    """
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    text_size, _ = cv2.getTextSize(text, font, font_scale, thickness)
+    text_x = margin
+    text_y = margin + text_size[1]
+
+    # Draw border text
+    cv2.putText(image, text, (text_x, text_y), font, font_scale, border_color, border_thickness, cv2.LINE_AA)
+    # Draw inner text
+    cv2.putText(image, text, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
+    return image
 
 # 5. PROCESS VIDEO
 while run:
@@ -263,6 +291,8 @@ while run:
             thread = threading.Thread(target=make_loop_for, args=(ses.fetcher.get_svg_for, best_board))
             thread.start()
 
+    # Show whose turn it is on the image.
+    image = put_text_top_left(image, "Black" if blacks_turn else "White", color=(0, 0, 0) if blacks_turn else (255,255,255), border_color=(0, 0, 0) if not blacks_turn else (255,255,255)) # TODO TEST
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     FRAME_WINDOW.image(image)
 
