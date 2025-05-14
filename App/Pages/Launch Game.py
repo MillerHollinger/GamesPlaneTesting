@@ -11,7 +11,7 @@ import keyboard
 from Games.DummyGameTTT import *
 from App.ConvertJSON import fetch_game
 from App.BoardFetcher import BoardFetcher
-from App.UwapiConverter import DaoConverter
+from App.UwapiConverter import *
 from CameraCalibration.auto_calibration import *
 from Helpers.StateEstimator import MajorityEstimator
 

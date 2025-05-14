@@ -5,6 +5,71 @@ import streamlit as st
 st.set_page_config(page_title="Docs - GamesPlane")
 st.header("Docs")
 
+with st.expander("Adding a New Game"):
+    st.markdown("""
+    Adding a new game to GamesPlane has these steps, which will be explained in more detail below:
+
+    1. Create a physical board and pieces
+    2. Create the .json file in Craftsman
+    3. Write a UWAPI converter
+    4. Register the game in `Launch Game.py`
+
+    #### Step 1: Create a Physical Board and Pieces
+    You'll need to create a board for your game with ArUco anchors, and then make ArUco pieces.
+    You can start with [this template](https://docs.google.com/presentation/d/1WUdp0DYTSKhTM55Ek5bQRoZIVrDISUIf8kJTF1hCyMw/edit?usp=sharing).
+    1. Make your board.
+        - You must have at least one anchor printed on the board.
+        - Each anchor should be a different ArUco ID.
+    2. Make your pieces.
+        - Several pieces may share the same ArUco. It is common to do with with equivalent pieces: e.g. for checkers, all the black checkers could be ArUco ID 1 and all the white ones could be ID 2.
+    3. Print out your board and pieces.  
+
+    You can click on an object and go Format options > Position to see its exact position. We often use From: Center in this panel to make the coordinate values smaller and easier to work with.
+
+    #### Step 2: Create the .json File in Craftsman
+    Go to the Craftsman tab in GamesPlane.
+    1. Add your **game's name**.
+    2. Set your **Centimeters to Space**. We usually use inches as space units, so type 2.54 unless you have a plan.
+    3. For each anchor, click **Add New ArUco**.
+        - Its tag can be anything. We usually use anchor_ID where ID is the ID you will assign it.
+        - ArUco ID is the ID of the specific anchor ArUco you are adding. Check the last page of the template for a key.
+        - Size is the length of a black edge of the ArUco. You can use Format options to see the element's size in Google Slides.
+        - Check "Anchored."
+        - Set its position X and position Y to the values in Format options, i.e. its position in inches.
+        - Click Add ArUco. Repeat for each anchor (4 anchors if you use the template)
+    4. For each piece type, click **Add New ArUco**.
+        - Its tag should be a short name for how you refer to that piece. "black" and "white" are common choices.
+        - ArUco ID is the ID of the specific piece ArUco you are adding. Check the last page of the template for a key.
+        - Size is the length of a black edge of the ArUco. You can use Format options to see the element's size in Google Slides.
+        - Click Add ArUco. Do not click Anchored.
+    5. Add the valid board positions. If you added spaces, you can again use Format Options to see the coordinates of each space you added.
+    6. (Optional) Upload the PDF of your game.  You can also share it through other means.
+    7. Click "Save". The data you input will be saved to a .json file. You can edit that file if you change your mind on anything instead of retyping everything into Craftsman.
+
+    #### Step 3: Write a UWAPI Converter
+    You need to provide logic to convert a list of DigitalAruco objects to a UWAPI string. 
+    1. Check the GamesmanUni of the game you are adding to understand how it forms UWAPI strings for that game. 
+    2. Go to `App/UwapiConverter.py`. Create a class extending UwapiConverter; you can use DaoConverter as an example.
+    3. Give it the function `convert`. Again, see DaoConverter to see how this looks. It takes in the current turn and a list of DigitalAruco objects.
+    4. Write logic that uses the DigitalAruco objects (likely using their `.closest_board_position` property and `.tag` property) to make a UWAPI string.
+        - Not all board states are valid: You can return `"fail"` if the provided state should not be sent to GamesmanUni. 
+
+    #### Step 4: Register the game in `Launch Game.py`
+    Now it's time to make `Launch Game.py` aware of your new game, which will add it as an option to play.
+    1. Find the dictionary `NAME_TO_INFO` near the top of the file.
+    2. Add your game to the dictionary in this format (you may use Dao as a reference again): 
+        - `"Name" : {"route" : "the name of this game's route on GamesmanUni", "converter" : YourGamesConverter}`
+        - `"route"` forms part of the GamesmanUni URL. Here are some examples:
+            - https://nyc.cs.berkeley.edu/uni/games/foxandhounds/variants/regular -> "foxandhounds"
+            - https://nyc.cs.berkeley.edu/uni/games/fourfieldkono/variants/standard -> "fourfieldkono"
+            - https://nyc.cs.berkeley.edu/uni/games/mutorere/variants/regular -> "mutorere"
+        - `"converter"` maps to your converter class. It is not a string.
+
+    #### Play!
+    Your game should now be added! Restart Streamlit if necessary and click your game's name in the list to play.
+
+    """)
+
 # Topics
 # Helper Classes
 with st.expander("DigitalAruco"):
