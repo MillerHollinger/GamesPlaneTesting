@@ -31,8 +31,8 @@ create, edit, and play games supported by GamesmanUni with AR move hints.
 """
 **I want to play an existing game!** ➡️ Click **Launch Game** in the sidebar.  
 **I want to learn the basics!** ➡️ Click **Starter Guide** in the sidebar.  
-**I want to add a new game!** ➡️ Click **Craftsman** in the sidebar.  
-**I want to see the full docs!** ➡️ Click **Docs** in the sidebar.  
+**I want to see the docs!** ➡️ Click **Docs** in the sidebar.  
+**I want to add a new game!** ➡️ Click **Craftsman** in the sidebar. Be sure to read the **Docs** first to learn how to use Craftsman.  
 """
 
 "*made with ❤️ by Miller Hollinger, MS 2025*"

@@ -16,7 +16,7 @@ with st.expander("DigitalAruco"):
 
     ## Import
     ```python
-    from Helpers/DigitalAruco import DigitalAruco
+    from Helpers.DigitalAruco import DigitalAruco
     ```
 
     ## Initialization
@@ -101,117 +101,188 @@ with st.expander("DigitalAruco"):
     ---
     """)
 
-"""
-Class: PhysicalAruco
+with st.expander("PhysicalAruco"):
+    st.markdown("""
+    # Class: `PhysicalAruco`
 
-Overview
-A PhysicalAruco represents an actual ArUco marker in the world. 
-Anchored ArUcos are ArUcos that are physically attached to on drawn on the game board itself. These are used to find the location of Unanchored ArUcos.  
-Unanchored ArUcos are ArUcos that move freely (i.e. game pieces). The position of these pieces is calculated with respect to Anchored ArUcos.
+    ## Overview
+    A `PhysicalAruco` represents an actual ArUco marker in the world.
 
-Import
-from Helpers/PhysicalAruco import PhysicalAruco
+    Anchored ArUcos are physically attached to or drawn on the game board. These are used to determine the location of unanchored ArUcos.  
+    Unanchored ArUcos move freely (e.g., game pieces), and their position is calculated relative to anchored ArUcos.
 
-Initialization
-PhysicalAruco(id, tag, size, anchored, board_position=None)
-id (int) : The ArUco Classic ID associated with this object. 0 to 100.
-tag (string) : A tag describing the ArUco. Used to convert the board state to a UWAPI string.
-size (float) : In centimeters, the length of one edge of this ArUco. ArUco markers are square, so either edge works.
-anchored (bool) : True if anchored. False if unanchored (a game piece).
-board_position (Tuple(float, float)) : Leave empty if unanchored. Where this marker is on the board, in (x, y) board coordinates.
+    ## Import
+    ```python
+    from Helpers.PhysicalAruco import PhysicalAruco
+    ```
 
-Methods
-generate_many(ids, tag, size, anchored, board_positions):
-A helper function to define many PhysicalAruco objects at once.
-It takes in some constants and some lists, and iterates through each, creating objects sequentially using the values at each index.
+    ## Initialization
 
-ids (List[int]) : A list of ids to use for the generated objects.
-tag (string) : The tag to use on all generated objects.
-size (float) : The size of the ArUcos on one edge.
-anchored (bool) : If the generated ArUcos are anchored.
-board_positions (List[Tuple(float, float)]) : Where each ArUco is positioned.
+    ```python
+    PhysicalAruco(id, tag, size, anchored, board_position=None)
+    ```
 
-"""
+    ### Parameters
 
-"""
-Class: PhysicalBoardInfo
+    * `id` (`int`): The ArUco Classic ID associated with this object. Ranges from 0 to 100.
+    * `tag` (`str`): A tag describing the ArUco. Used to convert the board state to a UWAPI string.
+    * `size` (`float`): The length (in cm) of one edge of this square marker.
+    * `anchored` (`bool`): `True` if the marker is anchored to the board, `False` if it's a movable piece.
+    * `board_position` (`Tuple[float, float]`, optional): Board coordinates of the marker. Leave empty if unanchored.
 
-Overview
-Represents the information associated with a specific game board.
+    ## Methods
 
-Import
-from Helpers/PhysicalBoardInfo import PhysicalBoardInfo
+    ### `generate_many(ids, tag, size, anchored, board_positions) -> List[PhysicalAruco]`
 
-Initialization
-PhysicalBoardInfo(unanchored_arucos: list[PhysicalAruco], anchored_arucos: list[PhysicalAruco], valid_board_positions: list[(float, float)], cm_to_space: float = 0):
+    A helper function to define multiple `PhysicalAruco` objects at once. It uses constant values and iterates over lists to construct each object sequentially.
 
-unanchored_arucos (list[PhysicalAruco]) : A list of unanchored ArUcos (pieces) that will be used in this game. Multiple pieces may share the same ArUco ID.
-anchored_arucos (list[PhysicalAruco]) : A list of anchored ArUcos attached to or printed on the board. They may not reuse the same ArUco ID.
-valid_board_positions (list[(float, float)]) : A list of positions in board coordinates where pieces may be placed.
-cm_to_space (float = 0) : How many centimeters in world space corresponds to one board unit. For example, on a grid board with square spaces 4cm to a side, this would be 4.
+    #### Parameters
 
+    * `ids` (`List[int]`): A list of IDs for the generated markers.
+    * `tag` (`str`): The tag to assign to all generated markers.
+    * `size` (`float`): The size of each marker (edge length).
+    * `anchored` (`bool`): Whether the generated markers are anchored.
+    * `board_positions` (`List[Tuple[float, float]]`): List of positions for each generated marker.
 
-Methods
-aruco_info_for(id):
-Returns the PhysicalAruco object of the first ArUco with the given ID. 
+    """)
 
-closest_valid_space(board_position)
-Given an (x, y) board position, returns the closest valid_board_position.
-"""
+with st.expander("PhysicalBoardInfo"):
+    st.markdown("""
+    # Class: `PhysicalBoardInfo`
 
-"""
-Class: GamesFrame
+    ## Overview
+    Represents the information associated with a specific game board.
 
-Overview
-A GamesFrame stores all of the data about a game, including the camera used to view that game. It's the object everything else builds into.
+    ## Import
+    ```python
+    from Helpers.PhysicalBoardInfo import PhysicalBoardInfo
+    ```
 
-Import
-from Helpers/GamesFrame import GamesFrame
+    ## Initialization
 
-Initialization
-GamesFrame(camera_yaml: str, board_info: PhysicalBoardInfo):
-camera_yaml (str) : The .yaml file path, or loaded yaml data, of the camera's intrinsics.
-board_info (PhysicalBoardInfo) : The information about this game's board.
+    ```python
+    PhysicalBoardInfo(unanchored_arucos, anchored_arucos, valid_board_positions, cm_to_space=0)
+    ```
 
-Methods
-process_image(image, give_reasoning: bool = False):
-Processes an image to find the ArUcos in it, returning DigitalAruco objects.
+    ### Parameters
 
-image (numpy array) : A numpy array from cv2 representing an image to analyze.
-give_reasoning (bool) : If it should also return a list of strings expressing the math it did.
+    * `unanchored_arucos` (`List[PhysicalAruco]`): A list of unanchored ArUcos (movable pieces) used in the game. Multiple pieces may share the same ArUco ID.
+    * `anchored_arucos` (`List[PhysicalAruco]`): A list of anchored ArUcos physically attached to or printed on the board. These must use unique ArUco IDs.
+    * `valid_board_positions` (`List[Tuple[float, float]]`): List of valid positions (in board coordinates) where pieces can be placed.
+    * `cm_to_space` (`float`, optional): Conversion factor from centimeters to board units. For example, if one grid space is 4 cm, this should be `4`.
 
-returns: Two lists of DigitalAruco objects. The first is the pieces found, the second is the anchors. If give_reasoning is True, returns a third list of string explanations of how its calculations were made.
-"""
+    ## Methods
 
-"""
-Class: BoardStateEstimator
+    ### `aruco_info_for(id) -> PhysicalAruco`
 
-Overview
-Given the board state estimation at each frame, produces a guess as to what the board actually is in real life. This is a base class that you can build other StateEstimators off of to create more nuanced logic based on time and frequency.
+    Returns the `PhysicalAruco` object corresponding to the first ArUco with the given ID.
 
-Import
-from Helpers/StateEstimator import BoardStateEstimator
-from Helpers/StateEstimator import MajorityEstimator
-from Helpers/StateEstimator import AgreeingEstimator
-from Helpers/StateEstimator import CombinationEstimator
+    #### Parameters
 
-We recommend using MajorityEstimator for most applications.
+    * `id` (`int`): The ArUco ID to look up.
 
-Initialization
-Depends on which StateEstimator you use. For MajorityEstimator:
-MajorityEstimator(max_frames=99, max_seconds=None):
-max_frames (int) : The number of frames permitted in the sliding window. As new frames are added, if they exceed this window, the oldest frame is deleted.
-max_seconds (float) : How long a frame remains "fresh". Frames older than this are deleted.
+    ---
 
-Methods
-seen_board_state(board):
-Adds the given board state to the StateEstimator as the most recent state.
+    ### `closest_valid_space(board_position) -> Tuple[float, float]`
 
-board (str) : A UWAPI board string just seen by the camera. This represents a potentially erroneous guess that the StateEstimator will take into account when making its prediction.
+    Given a board position, returns the closest valid position from `valid_board_positions`.
 
-curr_board_state()
-Returns the StateEstimator's guess for what the board state actually is using its internal logic.
+    #### Parameters
 
-returns (str) : The StateEstimator's UWAPI string guess.
+    * `board_position` (`Tuple[float, float]`): The closest valid board position.
 
-"""
+    """)
+
+with st.expander("GamesFrame"):
+    st.markdown("""
+    # Class: `GamesFrame`
+
+    ## Overview
+    A `GamesFrame` stores all the data about a game, including the camera used to view that game. It's the central object that everything else builds into.
+
+    ## Import
+    ```python
+    from Helpers.GamesFrame import GamesFrame
+    ```
+
+    ## Initialization
+
+    ```python
+    GamesFrame(camera_yaml, board_info)
+    ```
+
+    ### Parameters
+
+    * `camera_yaml` (`str`): The `.yaml` file path or preloaded YAML data containing the camera’s intrinsic parameters.
+    * `board_info` (`PhysicalBoardInfo`): Information about the game’s board, including ArUco markers and valid positions.
+
+    ## Methods
+
+    ### `process_image(image, give_reasoning=False) -> Union[Tuple[List[DigitalAruco], List[DigitalAruco]], Tuple[List[DigitalAruco], List[DigitalAruco], List[str]]]`
+
+    Processes an image to detect ArUco markers and returns corresponding `DigitalAruco` objects.
+
+    #### Parameters
+
+    * `image` (`np.ndarray`): A NumPy array representing the image to analyze (from `cv2`).
+    * `give_reasoning` (`bool`, optional): If `True`, also returns a list of string explanations of the math used to arrive at the given conclusion.
+
+    #### Returns
+
+    * `List[DigitalAruco]`: The detected unanchored pieces.
+    * `List[DigitalAruco]`: The detected anchor markers.
+    * `List[str]` (optional): Explanations of the spatial calculations, if `give_reasoning=True`.
+    """)
+
+with st.expander("BoardStateEstimator"):
+    st.markdown("""
+    # Class: `BoardStateEstimator`
+
+    ## Overview
+    Given the estimated board state at each frame, this class produces a guess of the actual, real-life board state.
+
+    This is a **base class** used to build more advanced estimators that incorporate time-based or frequency-based logic.  
+    We recommend using `MajorityEstimator` for most applications.
+
+    ## Import
+    ```python
+    from Helpers.StateEstimator import BoardStateEstimator
+    from Helpers.StateEstimator import MajorityEstimator
+    from Helpers.StateEstimator import AgreeingEstimator
+    from Helpers.StateEstimator import CombinationEstimator
+    ```
+
+    ## Initialization
+
+    Initialization depends on which `StateEstimator` subclass you use.
+    For `MajorityEstimator`:
+
+    ```python
+    MajorityEstimator(max_frames=99, max_seconds=None)
+    ```
+
+    ### Parameters
+
+    * `max_frames` (`int`, optional): Maximum number of frames to retain in the sliding window. When exceeded, the oldest frame is discarded.
+    * `max_seconds` (`float`, optional): Time in seconds a frame remains "fresh". Older frames are removed automatically.
+
+    ## Methods
+
+    ### `seen_board_state(board) -> None`
+
+    Adds the given board state to the estimator as the most recent observation.
+
+    #### Parameters
+
+    * `board` (`str`): A UWAPI board string created by the camera's observation. Represents a possibly erroneous snapshot to be included in estimation.
+
+    ---
+
+    ### `curr_board_state() -> str`
+
+    Returns the estimator’s current guess of the true board state, based on its internal logic and history.
+
+    #### Returns
+
+    * `str`: A UWAPI string representing the estimator's current best guess.
+    """)
